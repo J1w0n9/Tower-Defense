@@ -1779,6 +1779,11 @@ describe('GameEngine update loop', () => {
     expect(snapshot.enemies[0].position.x).toBeGreaterThan(0.5);
   });
 
+  // dt=0.02 (not 0.1) is deliberate: the projectile homes toward the target's
+  // *current* position each tick, so a coarse dt combined with a fast
+  // projectile (sniper speed 12) overshoots past a slow-moving scout every
+  // tick and never lands within HIT_THRESHOLD — verified by simulation before
+  // writing this test. dt=0.02 matches real per-frame granularity and converges.
   it('kills an enemy with a tower, grants gold, and removes the projectile', () => {
     const engine = new GameEngine(TEST_MAP);
     engine.placeTower({ x: 1, y: 0 }, 'sniper');
@@ -1786,8 +1791,8 @@ describe('GameEngine update loop', () => {
 
     const goldAfterPlacement = engine.getSnapshot().gold;
 
-    for (let i = 0; i < 200; i++) {
-      engine.update(0.1);
+    for (let i = 0; i < 1000; i++) {
+      engine.update(0.02);
       if (engine.getSnapshot().enemies.length === 0) break;
     }
 
@@ -1834,6 +1839,8 @@ describe('GameEngine update loop', () => {
     expect(statusListener).toHaveBeenCalledWith('lost');
   });
 
+  // Same dt=0.02 reasoning as the kill test above — a coarse dt would let
+  // the scout escape before the sniper's projectile ever converges.
   it('sets status to won once all waves are cleared with no enemies remaining', () => {
     const winMap: MapDefinition = {
       ...TEST_MAP,
@@ -1843,8 +1850,8 @@ describe('GameEngine update loop', () => {
     engine.placeTower({ x: 1, y: 0 }, 'sniper');
     engine.startNextWave();
 
-    for (let i = 0; i < 100; i++) {
-      engine.update(0.1);
+    for (let i = 0; i < 500; i++) {
+      engine.update(0.02);
     }
 
     expect(engine.getSnapshot().status).toBe('won');
