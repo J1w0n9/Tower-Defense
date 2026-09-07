@@ -1980,15 +1980,19 @@ git commit -m "feat: integrate GameEngine simulation loop"
 ### Task 9: SaveService
 
 **Files:**
-- Create: `src/engine/SaveService.ts`
-- Test: `src/engine/SaveService.test.ts`
+- Create: `src/persistence/SaveService.ts`
+- Test: `src/persistence/SaveService.test.ts`
+
+**Note:** 이 파일은 의도적으로 `src/engine/` 밖에 위치한다. `window.localStorage`를
+직접 다루기 때문에 "`src/engine/**`는 DOM을 건드리지 않는다"는 Global
+Constraint와 충돌하지 않도록 저장 계층은 별도 디렉토리로 분리한다.
 
 **Interfaces:**
 - Produces: `SaveData { version, mapId, gold, lives, waveNumber }`, `SaveService` interface `{ save(data), load(): SaveData | null, clear() }`, `LocalStorageSaveService implements SaveService`
 
 - [ ] **Step 1: 실패하는 테스트 작성**
 
-`src/engine/SaveService.test.ts`:
+`src/persistence/SaveService.test.ts`:
 ```ts
 import { beforeEach, describe, expect, it } from 'vitest';
 import { LocalStorageSaveService, type SaveData } from './SaveService';
@@ -2035,12 +2039,12 @@ describe('LocalStorageSaveService', () => {
 
 - [ ] **Step 2: 테스트 실패 확인**
 
-Run: `npx vitest run src/engine/SaveService.test.ts`
+Run: `npx vitest run src/persistence/SaveService.test.ts`
 Expected: FAIL
 
 - [ ] **Step 3: SaveService 구현**
 
-`src/engine/SaveService.ts`:
+`src/persistence/SaveService.ts`:
 ```ts
 export interface SaveData {
   version: number;
@@ -2092,13 +2096,13 @@ export class LocalStorageSaveService implements SaveService {
 
 - [ ] **Step 4: 테스트 통과 확인**
 
-Run: `npx vitest run src/engine/SaveService.test.ts`
+Run: `npx vitest run src/persistence/SaveService.test.ts`
 Expected: PASS
 
 - [ ] **Step 5: 커밋**
 
 ```bash
-git add src/engine/SaveService.ts src/engine/SaveService.test.ts
+git add src/persistence/SaveService.ts src/persistence/SaveService.test.ts
 git commit -m "feat: add SaveService with localStorage implementation"
 ```
 
