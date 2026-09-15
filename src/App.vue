@@ -58,10 +58,10 @@ function attachEngine(map: MapDefinition, newEngine: GameEngine): void {
   towerPanel.value = null;
 }
 
-function selectMap(mapId: string): void {
+function selectMap(mapId: string, endless: boolean): void {
   const map = MAPS.find((m) => m.id === mapId);
   if (!map) return;
-  attachEngine(map, new GameEngine(map, STARTING_GOLD, STARTING_LIVES));
+  attachEngine(map, new GameEngine(map, STARTING_GOLD, STARTING_LIVES, endless));
 }
 
 function startWave(): void {
@@ -118,7 +118,7 @@ function loadGame(): void {
   const map = MAPS.find((m) => m.id === state.mapId);
   if (!map) return;
 
-  const newEngine = new GameEngine(map, STARTING_GOLD, STARTING_LIVES);
+  const newEngine = new GameEngine(map, STARTING_GOLD, STARTING_LIVES, state.isEndless);
   newEngine.loadSnapshot(state);
   attachEngine(map, newEngine);
 }

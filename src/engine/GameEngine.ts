@@ -51,6 +51,7 @@ export interface GameSaveState extends SerializedGameState {
   gold: number;
   lives: number;
   completedWaves: number;
+  isEndless: boolean;
   towers: TowerSaveEntry[];
 }
 
@@ -70,6 +71,7 @@ export class GameEngine {
   readonly economy: Economy;
   readonly events = new EventEmitter<GameEventMap>();
   readonly towers: Tower[] = [];
+  readonly isEndless: boolean;
   enemies: Enemy[] = [];
   projectiles: Projectile[] = [];
   status: GameStatus = 'playing';
@@ -78,12 +80,14 @@ export class GameEngine {
   private readonly pathLength: number;
   private nextId = 0;
 
-  constructor(map: MapDefinition, startingGold: number, startingLives: number) {
+  constructor(map: MapDefinition, startingGold: number, startingLives: number, endless = false) {
     this.map = map;
     this.economy = new Economy(startingGold, startingLives);
     const { enemyPool, bossId } = map;
-    const endlessGenerator =
-      enemyPool && bossId ? (waveNumber: number) => generateEndlessWave(waveNumber, enemyPool, bossId) : undefined;
+    this.isEndless = endless && !!enemyPool && !!bossId;
+    const endlessGenerator = this.isEndless
+      ? (waveNumber: number) => generateEndlessWave(waveNumber, enemyPool!, bossId!)
+      : undefined;
     this.waveManager = new WaveManager(map.waves, endlessGenerator);
     this.pathLength = getPathLength(map.path);
   }
@@ -145,6 +149,7 @@ export class GameEngine {
       gold: this.economy.gold,
       lives: this.economy.lives,
       completedWaves: this.waveManager.currentWaveNumber,
+      isEndless: this.isEndless,
       towers: this.towers.map((tower) => ({
         towerTypeId: tower.stats.id,
         position: tower.position,

@@ -148,6 +148,7 @@ describe('GameEngine save/load', () => {
       gold: 500 - TOWERS_BY_ID.sniper.cost,
       lives: 20,
       completedWaves: 1,
+      isEndless: false,
       towers: [{ towerTypeId: 'sniper', position: { x: 2, y: 4 }, level: 1, supportMode: undefined }],
     });
   });
@@ -266,14 +267,15 @@ describe('GameEngine wave and combat loop', () => {
 });
 
 describe('GameEngine endless mode', () => {
-  const ENDLESS_MAP: MapDefinition = {
+  const ENDLESS_CAPABLE_MAP: MapDefinition = {
     ...TEST_MAP,
     enemyPool: ['walker', 'crawler'],
     bossId: 'boss',
   };
 
-  it('never reaches won once the fixed wave list is exhausted - it keeps generating waves', () => {
-    const engine = new GameEngine(ENDLESS_MAP, 500, 20);
+  it('never reaches won once the fixed wave list is exhausted when endless mode is chosen', () => {
+    const engine = new GameEngine(ENDLESS_CAPABLE_MAP, 500, 20, true);
+    expect(engine.isEndless).toBe(true);
     engine.startNextWave();
     for (let i = 0; i < 40; i++) engine.update(0.5);
     engine.startNextWave();
@@ -284,5 +286,15 @@ describe('GameEngine endless mode', () => {
     expect(engine.enemies).toHaveLength(0);
     engine.update(1);
     expect(engine.enemies.length).toBeGreaterThan(0);
+  });
+
+  it('still ends in victory on an endless-capable map when endless mode is not chosen', () => {
+    const engine = new GameEngine(ENDLESS_CAPABLE_MAP, 500, 20);
+    expect(engine.isEndless).toBe(false);
+    engine.startNextWave();
+    for (let i = 0; i < 40; i++) engine.update(0.5);
+    engine.startNextWave();
+    for (let i = 0; i < 40; i++) engine.update(0.5);
+    expect(engine.status).toBe('won');
   });
 });

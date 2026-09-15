@@ -2,19 +2,38 @@
 import { MAPS } from '../engine/maps';
 
 const emit = defineEmits<{
-  select: [mapId: string];
+  select: [mapId: string, endless: boolean];
 }>();
 </script>
 
 <template>
   <div class="map-select">
     <h1>좀비 아포칼립스 디펜스</h1>
-    <p class="subtitle">거점을 지킬 지역을 선택하세요</p>
-    <div class="map-grid">
-      <button v-for="map in MAPS" :key="map.id" type="button" class="map-card" @click="emit('select', map.id)">
-        {{ map.name }}
-      </button>
-    </div>
+    <p class="subtitle">거점을 지킬 지역과 모드를 선택하세요</p>
+
+    <section class="mode-section">
+      <h2>일반 모드</h2>
+      <div class="map-grid">
+        <button v-for="map in MAPS" :key="map.id" type="button" class="map-card" @click="emit('select', map.id, false)">
+          {{ map.name }}
+        </button>
+      </div>
+    </section>
+
+    <section class="mode-section">
+      <h2>무한 모드</h2>
+      <div class="map-grid">
+        <button
+          v-for="map in MAPS"
+          :key="map.id"
+          type="button"
+          class="map-card endless"
+          @click="emit('select', map.id, true)"
+        >
+          {{ map.name }} (무한)
+        </button>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -25,7 +44,7 @@ const emit = defineEmits<{
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 1.5rem;
   padding: 2rem;
   text-align: center;
 }
@@ -37,8 +56,16 @@ h1 {
 }
 
 .subtitle {
-  margin: 0 0 1.5rem;
+  margin: 0;
   color: var(--text-muted);
+}
+
+.mode-section h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: 0.05em;
 }
 
 .map-grid {
@@ -63,5 +90,13 @@ h1 {
   background: var(--panel-bg-raised);
   border-color: var(--accent);
   transform: translateY(-2px);
+}
+
+.map-card.endless {
+  border-color: var(--danger);
+}
+
+.map-card.endless:hover {
+  border-color: var(--danger-strong);
 }
 </style>
