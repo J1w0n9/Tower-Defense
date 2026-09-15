@@ -18,14 +18,14 @@ const MAP: MapDefinition = {
   waves: [],
 };
 
-function mockRect(canvas: HTMLElement) {
+function mockRect(canvas: HTMLElement, size = 200) {
   vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({
     left: 0,
     top: 0,
-    right: 200,
-    bottom: 200,
-    width: 200,
-    height: 200,
+    right: size,
+    bottom: size,
+    width: size,
+    height: size,
     x: 0,
     y: 0,
     toJSON: () => {},
@@ -76,6 +76,18 @@ describe('GameCanvas', () => {
     await fireEvent.click(canvas, { clientX: 45, clientY: 5 });
 
     expect(emitted()['tower-selected']).toEqual([[engine.towers[0].id]]);
+  });
+
+  it('accounts for CSS scaling when the canvas is displayed at a different size than its internal resolution', async () => {
+    const engine = new GameEngine(MAP, 500, 20);
+    const spy = vi.spyOn(engine, 'placeTower');
+    const { container } = render(GameCanvas, { props: { map: MAP, engine, selectedTowerId: 'scout' } });
+    const canvas = container.querySelector('canvas') as HTMLCanvasElement;
+    mockRect(canvas, 400); // displayed at 2x the internal 200x200 resolution
+
+    await fireEvent.click(canvas, { clientX: 90, clientY: 10 });
+
+    expect(spy).toHaveBeenCalledWith({ x: 1, y: 0 }, 'scout');
   });
 
   it('emits tower-selected with null when clicking an empty cell with no shop tower chosen', async () => {

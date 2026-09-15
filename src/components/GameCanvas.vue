@@ -37,11 +37,14 @@ onUnmounted(() => {
 });
 
 function onCanvasClick(event: MouseEvent): void {
-  if (!canvasRef.value) return;
-  const rect = canvasRef.value.getBoundingClientRect();
+  const canvas = canvasRef.value;
+  if (!canvas) return;
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
   const cell = {
-    x: Math.floor((event.clientX - rect.left) / props.map.cellSize),
-    y: Math.floor((event.clientY - rect.top) / props.map.cellSize),
+    x: Math.floor(((event.clientX - rect.left) * scaleX) / props.map.cellSize),
+    y: Math.floor(((event.clientY - rect.top) * scaleY) / props.map.cellSize),
   };
 
   if (props.selectedTowerId) {
@@ -62,3 +65,16 @@ function onCanvasClick(event: MouseEvent): void {
     @click="onCanvasClick"
   />
 </template>
+
+<style scoped>
+canvas {
+  display: block;
+  cursor: crosshair;
+  border: 1px solid var(--panel-border);
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+</style>
