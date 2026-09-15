@@ -36,6 +36,7 @@ const hud = reactive({
   waveNumber: 0,
   totalWaves: 0,
   status: 'playing' as GameStatus,
+  isEndless: false,
 });
 
 function attachEngine(map: MapDefinition, newEngine: GameEngine): void {
@@ -45,6 +46,7 @@ function attachEngine(map: MapDefinition, newEngine: GameEngine): void {
   hud.waveNumber = snapshot.waveNumber;
   hud.totalWaves = map.waves.length;
   hud.status = snapshot.status;
+  hud.isEndless = newEngine.isEndless;
 
   newEngine.events.on('gold-changed', (gold) => (hud.gold = gold));
   newEngine.events.on('lives-changed', (lives) => (hud.lives = lives));
@@ -141,6 +143,7 @@ function restart(): void {
       :wave-number="hud.waveNumber"
       :total-waves="hud.totalWaves"
       :status="hud.status"
+      :is-endless="hud.isEndless"
       @start-wave="startWave"
       @save="saveGame"
       @load="loadGame"
