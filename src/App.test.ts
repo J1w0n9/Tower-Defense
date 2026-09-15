@@ -1,10 +1,19 @@
-import { render, screen } from '@testing-library/vue';
+import { fireEvent, render, screen } from '@testing-library/vue';
 import { describe, expect, it } from 'vitest';
 import App from './App.vue';
+import { MAPS } from './engine/maps';
 
 describe('App', () => {
-  it('renders without crashing', () => {
+  it('shows the map select screen first', () => {
     render(App);
-    expect(screen.getByText('타워 디펜스 로딩 중...')).toBeInTheDocument();
+    expect(screen.getByText(MAPS[0].name)).toBeInTheDocument();
+  });
+
+  it('shows the HUD, tower shop, and canvas once a map is selected', async () => {
+    render(App);
+    await fireEvent.click(screen.getByText(MAPS[0].name));
+
+    expect(screen.getByText(/골드/)).toBeInTheDocument();
+    expect(document.querySelector('canvas')).not.toBeNull();
   });
 });
