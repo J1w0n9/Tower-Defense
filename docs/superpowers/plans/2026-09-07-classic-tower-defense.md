@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 브라우저에서 동작하는 클래식 타워 디펜스 웹게임(맵 3개, 타워 5종, 적 6종+보스)을 React + Canvas로 구현한다.
+**Goal:** 브라우저에서 동작하는 클래식 타워 디펜스 웹게임(맵 3개, 타워 6종[전투형 5+지원형 1], 적 6종+보스)을 Vue + Canvas로 구현한다.
 
-**Architecture:** DOM/React에 의존하지 않는 순수 TypeScript 게임 엔진(`src/engine/**`)이 시뮬레이션 전체를 소유하고, 얇은 Canvas 렌더러가 매 프레임 엔진 상태를 그림. React는 HUD/상점/모달 등 UI 셸만 담당하며 이벤트 구독으로만 엔진과 통신한다.
+**Architecture:** DOM/Vue에 의존하지 않는 순수 TypeScript 게임 엔진(`src/engine/**`)이 시뮬레이션 전체를 소유하고, 얇은 Canvas 렌더러가 매 프레임 엔진 상태를 그림. Vue는 HUD/상점/모달 등 UI 셸만 담당하며 이벤트 구독으로만 엔진과 통신한다.
 
-**Tech Stack:** Vite, React 18, TypeScript (strict), Vitest, @testing-library/react
+**Tech Stack:** Vite, Vue 3 (Composition API, `<script setup>`), TypeScript (strict), Vitest, @testing-library/vue
 
 **Spec:** `docs/superpowers/specs/2026-09-07-classic-tower-defense-design.md`
 
@@ -14,21 +14,21 @@
 
 - 이미지/스프라이트 에셋 사용 금지 — 모든 렌더링은 캔버스 도형(arc, rect, line)으로만 구현한다.
 - 저장은 `localStorage`만 사용하고 반드시 `SaveService` 인터페이스 뒤에 감춘다 (나중에 백엔드로 교체 가능하도록).
-- `src/engine/**` 아래 코드는 React나 DOM API(`window`, `document`, canvas 등)를 import하지 않는다. 순수 TypeScript만 사용해 유닛 테스트가 DOM 없이 돌아가야 한다.
-- 테스트 러너는 Vitest, 컴포넌트 테스트는 @testing-library/react를 사용한다.
+- `src/engine/**` 아래 코드는 Vue나 DOM API(`window`, `document`, canvas 등)를 import하지 않는다. 순수 TypeScript만 사용해 유닛 테스트가 DOM 없이 돌아가야 한다.
+- 테스트 러너는 Vitest, 컴포넌트 테스트는 @testing-library/vue를 사용한다. `fireEvent`/`render`는 프로미스를 반환하므로 테스트는 `async`로 작성하고 결과를 `await`한다.
 - 그리드 좌표계는 두 가지를 혼용하지 않는다: 타워 위치/설치 가능 타일은 **정수 셀 인덱스** `{x, y}`, 경로/적 위치는 **셀 중심 좌표** `{x: n+0.5, y: m+0.5}`. 모든 태스크에서 이 규칙을 지킨다.
 
 ---
 
-### Task 0: 프로젝트 스캐폴드 (Vite + React + TS + Vitest)
+### Task 0: 프로젝트 스캐폴드 (Vite + Vue + TS + Vitest)
 
 **Files:**
 - Create: `package.json`, `tsconfig.json`, `vite.config.ts`, `index.html`
-- Create: `src/setupTests.ts`, `src/main.tsx`, `src/App.tsx`
-- Test: `src/App.test.tsx`
+- Create: `src/env.d.ts`, `src/setupTests.ts`, `src/main.ts`, `src/App.vue`
+- Test: `src/App.test.ts`
 
 **Interfaces:**
-- Produces: `App` React 컴포넌트 (다른 태스크에서 최종적으로 교체됨, Task 14에서 실제 구현으로 대체)
+- Produces: `App` Vue 컴포넌트 (다른 태스크에서 최종적으로 교체됨, Task 15에서 실제 구현으로 대체)
 
 - [ ] **Step 1: 설정 파일 작성**
 
@@ -41,23 +41,22 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vue-tsc -b && vite build",
     "test": "vitest run"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "vue": "^3.5.12"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.5.0",
-    "@testing-library/react": "^16.0.1",
-    "@types/react": "^18.3.11",
-    "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.2",
+    "@testing-library/vue": "^8.1.0",
+    "@vitejs/plugin-vue": "^5.1.4",
+    "@vue/test-utils": "^2.4.6",
     "jsdom": "^25.0.1",
     "typescript": "^5.6.3",
     "vite": "^5.4.9",
-    "vitest": "^2.1.3"
+    "vitest": "^2.1.3",
+    "vue-tsc": "^2.1.6"
   }
 }
 ```
@@ -75,7 +74,6 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx",
     "strict": true,
     "types": ["vitest/globals", "@testing-library/jest-dom"]
   },
@@ -87,10 +85,10 @@
 ```ts
 /// <reference types="vitest" />
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [vue()],
   test: {
     environment: 'jsdom',
     globals: true,
@@ -110,9 +108,20 @@ export default defineConfig({
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
+```
+
+`src/env.d.ts`:
+```ts
+/// <reference types="vite/client" />
+
+declare module '*.vue' {
+  import type { DefineComponent } from 'vue';
+  const component: DefineComponent<Record<string, never>, Record<string, never>, unknown>;
+  export default component;
+}
 ```
 
 `src/setupTests.ts`:
@@ -120,17 +129,12 @@ export default defineConfig({
 import '@testing-library/jest-dom/vitest';
 ```
 
-`src/main.tsx`:
-```tsx
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import { App } from './App';
+`src/main.ts`:
+```ts
+import { createApp } from 'vue';
+import App from './App.vue';
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>
-);
+createApp(App).mount('#root');
 ```
 
 - [ ] **Step 2: 의존성 설치**
@@ -139,15 +143,15 @@ Run: `npm install`
 
 - [ ] **Step 3: 실패하는 스모크 테스트 작성**
 
-`src/App.test.tsx`:
-```tsx
-import { render, screen } from '@testing-library/react';
+`src/App.test.ts`:
+```ts
+import { render, screen } from '@testing-library/vue';
 import { describe, expect, it } from 'vitest';
-import { App } from './App';
+import App from './App.vue';
 
 describe('App', () => {
   it('renders without crashing', () => {
-    render(<App />);
+    render(App);
     expect(screen.getByText('타워 디펜스 로딩 중...')).toBeInTheDocument();
   });
 });
@@ -155,28 +159,30 @@ describe('App', () => {
 
 - [ ] **Step 4: 테스트 실행하여 실패 확인**
 
-Run: `npx vitest run src/App.test.tsx`
-Expected: FAIL (`src/App.tsx` 모듈이 없음)
+Run: `npx vitest run src/App.test.ts`
+Expected: FAIL (`src/App.vue` 모듈이 없음)
 
-- [ ] **Step 5: App.tsx 최소 구현**
+- [ ] **Step 5: App.vue 최소 구현**
 
-`src/App.tsx`:
-```tsx
-export function App() {
-  return <div>타워 디펜스 로딩 중...</div>;
-}
+`src/App.vue`:
+```vue
+<script setup lang="ts"></script>
+
+<template>
+  <div>타워 디펜스 로딩 중...</div>
+</template>
 ```
 
 - [ ] **Step 6: 테스트 실행하여 통과 확인**
 
-Run: `npx vitest run src/App.test.tsx`
+Run: `npx vitest run src/App.test.ts`
 Expected: PASS
 
 - [ ] **Step 7: 커밋**
 
 ```bash
 git add package.json tsconfig.json vite.config.ts index.html src/
-git commit -m "chore: scaffold vite+react+ts project with vitest"
+git commit -m "chore: scaffold vite+vue+ts project with vitest"
 ```
 
 ---
@@ -951,7 +957,7 @@ git commit -m "feat: add enemy stats table and Enemy class"
 
 **Interfaces:**
 - Consumes: `TowerStats`, `Point` (Task 1), `Enemy` (Task 3), `distance` (Task 1 vector.ts)
-- Produces: `TOWER_LIST: TowerStats[]`, `TOWERS_BY_ID: Record<string, TowerStats>` (towers.ts) — consumed by GameEngine (Task 8), TowerShop (Task 13)
+- Produces: `TOWER_LIST: TowerStats[]`, `TOWERS_BY_ID: Record<string, TowerStats>` (towers.ts) — consumed by GameEngine (Task 8), TowerShop (Task 14); extended with a 6th (support) tower in Task 12
 - Produces: `Tower` class with `id`, `stats`, `position`, `level`, getters `centerPosition`, `range`, `damage`, `upgradeCost`, `canFire`, methods `canUpgrade()`, `upgrade()`, `isInRange(pos)`, `tick(dt)`, `resetCooldown()`, `findTarget(candidates)` — consumed by GameEngine (Task 8)
 - Produces: `TargetCandidate` interface `{ enemy: Enemy; position: Point }`
 
@@ -1577,7 +1583,7 @@ git commit -m "feat: add WaveManager for spawn timing and wave progression"
 - Consumes: `EventEmitter`, `GameEventMap`, `MapDefinition`, `Point`, `GameStatus` (Task 1); `getPathLength`, `getPositionAtDistance` (Task 2); `Enemy`, `ENEMIES_BY_ID` (Task 3); `Tower`, `TargetCandidate`, `TOWERS_BY_ID` (Task 4); `Projectile` (Task 5); `Economy` (Task 6); `WaveManager` (Task 7); `distance` (Task 1 vector.ts)
 - Produces: `GameEngine extends EventEmitter<GameEventMap>` with constructor `(map: MapDefinition)`, methods `startNextWave(): boolean`, `placeTower(cell: Point, towerId: string): PlaceTowerResult`, `update(dt: number): void`, `getSnapshot(): EngineSnapshot`
 - Produces: `PlaceTowerResult { success: boolean; reason?: 'occupied' | 'not-buildable' | 'insufficient-gold' }`
-- Produces: `EngineSnapshot { towers, enemies, projectiles, gold, lives, waveNumber, totalWaves, isWaveInProgress, status }` — consumed by Renderer (Task 10), useEngineState hook (Task 14)
+- Produces: `EngineSnapshot { towers, enemies, projectiles, gold, lives, waveNumber, totalWaves, isWaveInProgress, status }` — consumed by Renderer (Task 10), useEngineState hook (Task 15); `towers` entries extended with `range`/`isSupport` in Task 12
 
 - [ ] **Step 1: 타워 배치 관련 실패하는 테스트 작성**
 
@@ -2275,23 +2281,23 @@ git commit -m "feat: add canvas renderer for game state"
 
 ---
 
-### Task 11: GameCanvas React 컴포넌트
+### Task 11: GameCanvas Vue 컴포넌트
 
 **Files:**
-- Create: `src/components/GameCanvas.tsx`
-- Test: `src/components/GameCanvas.test.tsx`
+- Create: `src/components/GameCanvas.vue`
+- Test: `src/components/GameCanvas.test.ts`
 
 **Interfaces:**
 - Consumes: `GameEngine` (Task 8), `drawGame` (Task 10), `MapDefinition` (Task 1)
-- Produces: `GameCanvas` component, props `{ map: MapDefinition; engine: GameEngine; selectedTowerId: string | null; onPlacementResult?: (result: PlaceTowerResult) => void }` — consumed by App (Task 14)
+- Produces: `GameCanvas` component, props `{ map: MapDefinition; engine: GameEngine; selectedTowerId: string | null; onPlacementResult?: (result: PlaceTowerResult) => void }` — consumed by App (Task 15)
 
 - [ ] **Step 1: 실패하는 테스트 작성 (클릭 → 타워 배치 호출만 검증)**
 
-`src/components/GameCanvas.test.tsx`:
-```tsx
-import { fireEvent, render, screen } from '@testing-library/react';
+`src/components/GameCanvas.test.ts`:
+```ts
+import { fireEvent, render, screen } from '@testing-library/vue';
 import { describe, expect, it, vi } from 'vitest';
-import { GameCanvas } from './GameCanvas';
+import GameCanvas from './GameCanvas.vue';
 import type { MapDefinition } from '../engine/types';
 
 const MAP: MapDefinition = {
@@ -2324,27 +2330,27 @@ function makeFakeEngine() {
 }
 
 describe('GameCanvas', () => {
-  it('does not place a tower when no tower type is selected', () => {
+  it('does not place a tower when no tower type is selected', async () => {
     const engine = makeFakeEngine();
-    render(<GameCanvas map={MAP} engine={engine as never} selectedTowerId={null} />);
+    render(GameCanvas, { props: { map: MAP, engine: engine as never, selectedTowerId: null } });
 
     const canvas = screen.getByTestId('game-canvas');
     canvas.getBoundingClientRect = () => ({ left: 0, top: 0 } as DOMRect);
-    fireEvent.click(canvas, { clientX: 60, clientY: 20 });
+    await fireEvent.click(canvas, { clientX: 60, clientY: 20 });
 
     expect(engine.placeTower).not.toHaveBeenCalled();
   });
 
-  it('places a tower at the clicked grid cell when a tower type is selected', () => {
+  it('places a tower at the clicked grid cell when a tower type is selected', async () => {
     const engine = makeFakeEngine();
     const onPlacementResult = vi.fn();
-    render(
-      <GameCanvas map={MAP} engine={engine as never} selectedTowerId="basic" onPlacementResult={onPlacementResult} />
-    );
+    render(GameCanvas, {
+      props: { map: MAP, engine: engine as never, selectedTowerId: 'basic', onPlacementResult },
+    });
 
     const canvas = screen.getByTestId('game-canvas');
     canvas.getBoundingClientRect = () => ({ left: 0, top: 0 } as DOMRect);
-    fireEvent.click(canvas, { clientX: 60, clientY: 20 });
+    await fireEvent.click(canvas, { clientX: 60, clientY: 20 });
 
     expect(engine.placeTower).toHaveBeenCalledWith({ x: 1, y: 0 }, 'basic');
     expect(onPlacementResult).toHaveBeenCalledWith({ success: true });
@@ -2354,30 +2360,32 @@ describe('GameCanvas', () => {
 
 - [ ] **Step 2: 테스트 실패 확인**
 
-Run: `npx vitest run src/components/GameCanvas.test.tsx`
+Run: `npx vitest run src/components/GameCanvas.test.ts`
 Expected: FAIL
 
 - [ ] **Step 3: GameCanvas 구현**
 
-`src/components/GameCanvas.tsx`:
-```tsx
-import { useEffect, useRef } from 'react';
+`src/components/GameCanvas.vue`:
+```vue
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 import { drawGame } from '../render/Renderer';
 import type { GameEngine, PlaceTowerResult } from '../engine/GameEngine';
 import type { MapDefinition } from '../engine/types';
 
-export interface GameCanvasProps {
+const props = defineProps<{
   map: MapDefinition;
   engine: GameEngine;
   selectedTowerId: string | null;
   onPlacementResult?: (result: PlaceTowerResult) => void;
-}
+}>();
 
-export function GameCanvas({ map, engine, selectedTowerId, onPlacementResult }: GameCanvasProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+const canvasRef = ref<HTMLCanvasElement | null>(null);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
+watch(
+  () => [props.engine, props.map] as const,
+  ([engine, map], _previous, onCleanup) => {
+    const canvas = canvasRef.value;
     const ctx = canvas?.getContext('2d');
     if (!ctx) return;
 
@@ -2393,70 +2401,72 @@ export function GameCanvas({ map, engine, selectedTowerId, onPlacementResult }: 
     };
 
     rafId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(rafId);
-  }, [engine, map]);
+    onCleanup(() => cancelAnimationFrame(rafId));
+  },
+  { immediate: true, flush: 'post' }
+);
 
-  const handleClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!selectedTowerId) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const cell = {
-      x: Math.floor((event.clientX - rect.left) / map.cellSize),
-      y: Math.floor((event.clientY - rect.top) / map.cellSize),
-    };
-    const result = engine.placeTower(cell, selectedTowerId);
-    onPlacementResult?.(result);
+function handleClick(event: MouseEvent) {
+  if (!props.selectedTowerId) return;
+  const canvas = canvasRef.value;
+  if (!canvas) return;
+  const rect = canvas.getBoundingClientRect();
+  const cell = {
+    x: Math.floor((event.clientX - rect.left) / props.map.cellSize),
+    y: Math.floor((event.clientY - rect.top) / props.map.cellSize),
   };
-
-  return (
-    <canvas
-      ref={canvasRef}
-      width={map.gridWidth * map.cellSize}
-      height={map.gridHeight * map.cellSize}
-      onClick={handleClick}
-      data-testid="game-canvas"
-    />
-  );
+  const result = props.engine.placeTower(cell, props.selectedTowerId);
+  props.onPlacementResult?.(result);
 }
+</script>
+
+<template>
+  <canvas
+    ref="canvasRef"
+    :width="map.gridWidth * map.cellSize"
+    :height="map.gridHeight * map.cellSize"
+    @click="handleClick"
+    data-testid="game-canvas"
+  />
+</template>
 ```
 
 - [ ] **Step 4: 테스트 통과 확인**
 
-Run: `npx vitest run src/components/GameCanvas.test.tsx`
+Run: `npx vitest run src/components/GameCanvas.test.ts`
 Expected: PASS
 
 - [ ] **Step 5: 커밋**
 
 ```bash
-git add src/components/GameCanvas.tsx src/components/GameCanvas.test.tsx
+git add src/components/GameCanvas.vue src/components/GameCanvas.test.ts
 git commit -m "feat: add GameCanvas component with click-to-place towers"
 ```
 
 ---
 
-### Task 12: HUD 컴포넌트
+### Task 13: HUD 컴포넌트
 
 **Files:**
-- Create: `src/components/HUD.tsx`
-- Test: `src/components/HUD.test.tsx`
+- Create: `src/components/HUD.vue`
+- Test: `src/components/HUD.test.ts`
 
 **Interfaces:**
-- Produces: `HUD` component, props `{ gold, lives, waveNumber, totalWaves, isWaveInProgress, onStartWave }` — consumed by App (Task 14)
+- Produces: `HUD` component, props `{ gold, lives, waveNumber, totalWaves, isWaveInProgress, onStartWave }` — consumed by App (Task 15)
 
 - [ ] **Step 1: 실패하는 테스트 작성**
 
-`src/components/HUD.test.tsx`:
-```tsx
-import { fireEvent, render, screen } from '@testing-library/react';
+`src/components/HUD.test.ts`:
+```ts
+import { fireEvent, render, screen } from '@testing-library/vue';
 import { describe, expect, it, vi } from 'vitest';
-import { HUD } from './HUD';
+import HUD from './HUD.vue';
 
 describe('HUD', () => {
   it('displays gold, lives, and wave progress', () => {
-    render(
-      <HUD gold={120} lives={18} waveNumber={2} totalWaves={8} isWaveInProgress={false} onStartWave={() => {}} />
-    );
+    render(HUD, {
+      props: { gold: 120, lives: 18, waveNumber: 2, totalWaves: 8, isWaveInProgress: false, onStartWave: () => {} },
+    });
 
     expect(screen.getByTestId('hud-gold')).toHaveTextContent('120');
     expect(screen.getByTestId('hud-lives')).toHaveTextContent('18');
@@ -2464,21 +2474,21 @@ describe('HUD', () => {
     expect(screen.getByTestId('hud-wave')).toHaveTextContent('8');
   });
 
-  it('calls onStartWave when the button is clicked while no wave is in progress', () => {
+  it('calls onStartWave when the button is clicked while no wave is in progress', async () => {
     const onStartWave = vi.fn();
-    render(
-      <HUD gold={0} lives={20} waveNumber={0} totalWaves={8} isWaveInProgress={false} onStartWave={onStartWave} />
-    );
+    render(HUD, {
+      props: { gold: 0, lives: 20, waveNumber: 0, totalWaves: 8, isWaveInProgress: false, onStartWave },
+    });
 
-    fireEvent.click(screen.getByTestId('start-wave-button'));
+    await fireEvent.click(screen.getByTestId('start-wave-button'));
 
     expect(onStartWave).toHaveBeenCalledTimes(1);
   });
 
   it('disables the start button while a wave is in progress', () => {
-    render(
-      <HUD gold={0} lives={20} waveNumber={1} totalWaves={8} isWaveInProgress onStartWave={() => {}} />
-    );
+    render(HUD, {
+      props: { gold: 0, lives: 20, waveNumber: 1, totalWaves: 8, isWaveInProgress: true, onStartWave: () => {} },
+    });
 
     expect(screen.getByTestId('start-wave-button')).toBeDisabled();
   });
@@ -2487,74 +2497,72 @@ describe('HUD', () => {
 
 - [ ] **Step 2: 테스트 실패 확인**
 
-Run: `npx vitest run src/components/HUD.test.tsx`
+Run: `npx vitest run src/components/HUD.test.ts`
 Expected: FAIL
 
 - [ ] **Step 3: HUD 구현**
 
-`src/components/HUD.tsx`:
-```tsx
-export interface HUDProps {
+`src/components/HUD.vue`:
+```vue
+<script setup lang="ts">
+defineProps<{
   gold: number;
   lives: number;
   waveNumber: number;
   totalWaves: number;
   isWaveInProgress: boolean;
   onStartWave: () => void;
-}
+}>();
+</script>
 
-export function HUD({ gold, lives, waveNumber, totalWaves, isWaveInProgress, onStartWave }: HUDProps) {
-  return (
-    <div className="hud">
-      <span data-testid="hud-gold">골드: {gold}</span>
-      <span data-testid="hud-lives">라이프: {lives}</span>
-      <span data-testid="hud-wave">
-        웨이브: {waveNumber} / {totalWaves}
-      </span>
-      <button onClick={onStartWave} disabled={isWaveInProgress} data-testid="start-wave-button">
-        {isWaveInProgress ? '웨이브 진행 중' : '다음 웨이브 시작'}
-      </button>
-    </div>
-  );
-}
+<template>
+  <div class="hud">
+    <span data-testid="hud-gold">골드: {{ gold }}</span>
+    <span data-testid="hud-lives">라이프: {{ lives }}</span>
+    <span data-testid="hud-wave">웨이브: {{ waveNumber }} / {{ totalWaves }}</span>
+    <button @click="onStartWave" :disabled="isWaveInProgress" data-testid="start-wave-button">
+      {{ isWaveInProgress ? '웨이브 진행 중' : '다음 웨이브 시작' }}
+    </button>
+  </div>
+</template>
 ```
 
 - [ ] **Step 4: 테스트 통과 확인**
 
-Run: `npx vitest run src/components/HUD.test.tsx`
+Run: `npx vitest run src/components/HUD.test.ts`
 Expected: PASS
 
 - [ ] **Step 5: 커밋**
 
 ```bash
-git add src/components/HUD.tsx src/components/HUD.test.tsx
+git add src/components/HUD.vue src/components/HUD.test.ts
 git commit -m "feat: add HUD component"
 ```
 
 ---
 
-### Task 13: TowerShop 컴포넌트
+### Task 14: TowerShop 컴포넌트
 
 **Files:**
-- Create: `src/components/TowerShop.tsx`
-- Test: `src/components/TowerShop.test.tsx`
+- Create: `src/components/TowerShop.vue`
+- Test: `src/components/TowerShop.test.ts`
 
 **Interfaces:**
 - Consumes: `TowerStats` (Task 1)
-- Produces: `TowerShop` component, props `{ towers: TowerStats[]; gold: number; selectedTowerId: string | null; onSelectTower: (towerId: string) => void }` — consumed by App (Task 14)
+- Produces: `TowerShop` component, props `{ towers: TowerStats[]; gold: number; selectedTowerId: string | null; onSelectTower: (towerId: string) => void }` — consumed by App (Task 15)
 
 - [ ] **Step 1: 실패하는 테스트 작성**
 
-`src/components/TowerShop.test.tsx`:
-```tsx
-import { fireEvent, render, screen } from '@testing-library/react';
+`src/components/TowerShop.test.ts`:
+```ts
+import { fireEvent, render, screen } from '@testing-library/vue';
 import { describe, expect, it, vi } from 'vitest';
-import { TowerShop } from './TowerShop';
+import TowerShop from './TowerShop.vue';
 import { TOWER_LIST } from '../engine/towers';
 
 describe('TowerShop', () => {
   it('renders one option per tower', () => {
-    render(<TowerShop towers={TOWER_LIST} gold={1000} selectedTowerId={null} onSelectTower={() => {}} />);
+    render(TowerShop, { props: { towers: TOWER_LIST, gold: 1000, selectedTowerId: null, onSelectTower: () => {} } });
 
     for (const tower of TOWER_LIST) {
       expect(screen.getByTestId(`tower-option-${tower.id}`)).toBeInTheDocument();
@@ -2562,16 +2570,16 @@ describe('TowerShop', () => {
   });
 
   it('disables towers the player cannot afford', () => {
-    render(<TowerShop towers={TOWER_LIST} gold={10} selectedTowerId={null} onSelectTower={() => {}} />);
+    render(TowerShop, { props: { towers: TOWER_LIST, gold: 10, selectedTowerId: null, onSelectTower: () => {} } });
 
     expect(screen.getByTestId('tower-option-basic')).toBeDisabled();
   });
 
-  it('calls onSelectTower with the tower id when an affordable tower is clicked', () => {
+  it('calls onSelectTower with the tower id when an affordable tower is clicked', async () => {
     const onSelectTower = vi.fn();
-    render(<TowerShop towers={TOWER_LIST} gold={1000} selectedTowerId={null} onSelectTower={onSelectTower} />);
+    render(TowerShop, { props: { towers: TOWER_LIST, gold: 1000, selectedTowerId: null, onSelectTower } });
 
-    fireEvent.click(screen.getByTestId('tower-option-basic'));
+    await fireEvent.click(screen.getByTestId('tower-option-basic'));
 
     expect(onSelectTower).toHaveBeenCalledWith('basic');
   });
@@ -2580,97 +2588,93 @@ describe('TowerShop', () => {
 
 - [ ] **Step 2: 테스트 실패 확인**
 
-Run: `npx vitest run src/components/TowerShop.test.tsx`
+Run: `npx vitest run src/components/TowerShop.test.ts`
 Expected: FAIL
 
 - [ ] **Step 3: TowerShop 구현**
 
-`src/components/TowerShop.tsx`:
-```tsx
+`src/components/TowerShop.vue`:
+```vue
+<script setup lang="ts">
 import type { TowerStats } from '../engine/types';
 
-export interface TowerShopProps {
+defineProps<{
   towers: TowerStats[];
   gold: number;
   selectedTowerId: string | null;
   onSelectTower: (towerId: string) => void;
-}
+}>();
+</script>
 
-export function TowerShop({ towers, gold, selectedTowerId, onSelectTower }: TowerShopProps) {
-  return (
-    <div className="tower-shop">
-      {towers.map((tower) => {
-        const affordable = gold >= tower.cost;
-        return (
-          <button
-            key={tower.id}
-            onClick={() => onSelectTower(tower.id)}
-            disabled={!affordable}
-            aria-pressed={selectedTowerId === tower.id}
-            data-testid={`tower-option-${tower.id}`}
-          >
-            {tower.name} ({tower.cost}G)
-          </button>
-        );
-      })}
-    </div>
-  );
-}
+<template>
+  <div class="tower-shop">
+    <button
+      v-for="tower in towers"
+      :key="tower.id"
+      @click="onSelectTower(tower.id)"
+      :disabled="gold < tower.cost"
+      :aria-pressed="selectedTowerId === tower.id"
+      :data-testid="`tower-option-${tower.id}`"
+    >
+      {{ tower.name }} ({{ tower.cost }}G)
+    </button>
+  </div>
+</template>
 ```
 
 - [ ] **Step 4: 테스트 통과 확인**
 
-Run: `npx vitest run src/components/TowerShop.test.tsx`
+Run: `npx vitest run src/components/TowerShop.test.ts`
 Expected: PASS
 
 - [ ] **Step 5: 커밋**
 
 ```bash
-git add src/components/TowerShop.tsx src/components/TowerShop.test.tsx
+git add src/components/TowerShop.vue src/components/TowerShop.test.ts
 git commit -m "feat: add TowerShop component"
 ```
 
 ---
 
-### Task 14: MapSelect, ResultModal, useEngineState 훅, App 통합
+### Task 15: MapSelect, ResultModal, useEngineState 컴포저블, App 통합
 
 **Files:**
-- Create: `src/components/MapSelect.tsx`
-- Create: `src/components/ResultModal.tsx`
-- Create: `src/hooks/useEngineState.ts`
-- Modify: `src/App.tsx` (Task 0의 플레이스홀더를 실제 화면 전환 로직으로 교체)
-- Modify: `src/App.test.tsx` (플레이스홀더 텍스트 검증 → 맵 선택 화면 검증으로 교체)
-- Test: `src/components/MapSelect.test.tsx`
-- Test: `src/components/ResultModal.test.tsx`
-- Test: `src/hooks/useEngineState.test.ts`
+- Create: `src/components/MapSelect.vue`
+- Create: `src/components/ResultModal.vue`
+- Create: `src/composables/useEngineState.ts`
+- Modify: `src/App.vue` (Task 0의 플레이스홀더를 실제 화면 전환 로직으로 교체)
+- Modify: `src/App.test.ts` (플레이스홀더 텍스트 검증 → 맵 선택 화면 검증으로 교체)
+- Test: `src/components/MapSelect.test.ts`
+- Test: `src/components/ResultModal.test.ts`
+- Test: `src/composables/useEngineState.test.ts`
 
 **Interfaces:**
-- Consumes: `MapDefinition` (Task 1), `GameEngine`, `EngineSnapshot` (Task 8), `MAPS` (Task 2), `TOWER_LIST` (Task 4), `GameCanvas` (Task 11), `HUD` (Task 12), `TowerShop` (Task 13)
+- Consumes: `MapDefinition` (Task 1), `GameEngine`, `EngineSnapshot` (Task 8, extended in Task 12), `MAPS` (Task 2), `TOWER_LIST` (Task 4, extended in Task 12), `GameCanvas` (Task 11), `HUD` (Task 13), `TowerShop` (Task 14)
 - Produces: `MapSelect` component props `{ maps: MapDefinition[]; onSelectMap: (mapId: string) => void }`
 - Produces: `ResultModal` component props `{ status: 'won' | 'lost'; onRestart: () => void }`
-- Produces: `useEngineState(engine: GameEngine | null): EngineSnapshot`
+- Produces: `useEngineState(engineRef: Ref<GameEngine | null>): Ref<EngineSnapshot>`
 
 - [ ] **Step 1: MapSelect 실패하는 테스트 작성**
 
-`src/components/MapSelect.test.tsx`:
-```tsx
-import { fireEvent, render, screen } from '@testing-library/react';
+`src/components/MapSelect.test.ts`:
+```ts
+import { fireEvent, render, screen } from '@testing-library/vue';
 import { describe, expect, it, vi } from 'vitest';
-import { MapSelect } from './MapSelect';
+import MapSelect from './MapSelect.vue';
 import { MAPS } from '../engine/maps';
 
 describe('MapSelect', () => {
   it('renders one option per map', () => {
-    render(<MapSelect maps={MAPS} onSelectMap={() => {}} />);
+    render(MapSelect, { props: { maps: MAPS, onSelectMap: () => {} } });
     for (const map of MAPS) {
       expect(screen.getByTestId(`map-option-${map.id}`)).toHaveTextContent(map.name);
     }
   });
 
-  it('calls onSelectMap with the clicked map id', () => {
+  it('calls onSelectMap with the clicked map id', async () => {
     const onSelectMap = vi.fn();
-    render(<MapSelect maps={MAPS} onSelectMap={onSelectMap} />);
-    fireEvent.click(screen.getByTestId(`map-option-${MAPS[0].id}`));
+    render(MapSelect, { props: { maps: MAPS, onSelectMap } });
+    await fireEvent.click(screen.getByTestId(`map-option-${MAPS[0].id}`));
     expect(onSelectMap).toHaveBeenCalledWith(MAPS[0].id);
   });
 });
@@ -2678,62 +2682,65 @@ describe('MapSelect', () => {
 
 - [ ] **Step 2: 테스트 실패 확인**
 
-Run: `npx vitest run src/components/MapSelect.test.tsx`
+Run: `npx vitest run src/components/MapSelect.test.ts`
 Expected: FAIL
 
 - [ ] **Step 3: MapSelect 구현**
 
-`src/components/MapSelect.tsx`:
-```tsx
+`src/components/MapSelect.vue`:
+```vue
+<script setup lang="ts">
 import type { MapDefinition } from '../engine/types';
 
-export interface MapSelectProps {
+defineProps<{
   maps: MapDefinition[];
   onSelectMap: (mapId: string) => void;
-}
+}>();
+</script>
 
-export function MapSelect({ maps, onSelectMap }: MapSelectProps) {
-  return (
-    <div className="map-select">
-      <h1>맵을 선택하세요</h1>
-      {maps.map((map) => (
-        <button key={map.id} onClick={() => onSelectMap(map.id)} data-testid={`map-option-${map.id}`}>
-          {map.name}
-        </button>
-      ))}
-    </div>
-  );
-}
+<template>
+  <div class="map-select">
+    <h1>맵을 선택하세요</h1>
+    <button
+      v-for="map in maps"
+      :key="map.id"
+      @click="onSelectMap(map.id)"
+      :data-testid="`map-option-${map.id}`"
+    >
+      {{ map.name }}
+    </button>
+  </div>
+</template>
 ```
 
 - [ ] **Step 4: 테스트 통과 확인**
 
-Run: `npx vitest run src/components/MapSelect.test.tsx`
+Run: `npx vitest run src/components/MapSelect.test.ts`
 Expected: PASS
 
 - [ ] **Step 5: ResultModal 실패하는 테스트 작성**
 
-`src/components/ResultModal.test.tsx`:
-```tsx
-import { fireEvent, render, screen } from '@testing-library/react';
+`src/components/ResultModal.test.ts`:
+```ts
+import { fireEvent, render, screen } from '@testing-library/vue';
 import { describe, expect, it, vi } from 'vitest';
-import { ResultModal } from './ResultModal';
+import ResultModal from './ResultModal.vue';
 
 describe('ResultModal', () => {
   it('shows a victory message when status is won', () => {
-    render(<ResultModal status="won" onRestart={() => {}} />);
+    render(ResultModal, { props: { status: 'won', onRestart: () => {} } });
     expect(screen.getByTestId('result-modal')).toHaveTextContent('승리');
   });
 
   it('shows a defeat message when status is lost', () => {
-    render(<ResultModal status="lost" onRestart={() => {}} />);
+    render(ResultModal, { props: { status: 'lost', onRestart: () => {} } });
     expect(screen.getByTestId('result-modal')).toHaveTextContent('패배');
   });
 
-  it('calls onRestart when the restart button is clicked', () => {
+  it('calls onRestart when the restart button is clicked', async () => {
     const onRestart = vi.fn();
-    render(<ResultModal status="won" onRestart={onRestart} />);
-    fireEvent.click(screen.getByTestId('restart-button'));
+    render(ResultModal, { props: { status: 'won', onRestart } });
+    await fireEvent.click(screen.getByTestId('restart-button'));
     expect(onRestart).toHaveBeenCalledTimes(1);
   });
 });
@@ -2741,40 +2748,38 @@ describe('ResultModal', () => {
 
 - [ ] **Step 6: 테스트 실패 확인**
 
-Run: `npx vitest run src/components/ResultModal.test.tsx`
+Run: `npx vitest run src/components/ResultModal.test.ts`
 Expected: FAIL
 
 - [ ] **Step 7: ResultModal 구현**
 
-`src/components/ResultModal.tsx`:
-```tsx
-export interface ResultModalProps {
+`src/components/ResultModal.vue`:
+```vue
+<script setup lang="ts">
+defineProps<{
   status: 'won' | 'lost';
   onRestart: () => void;
-}
+}>();
+</script>
 
-export function ResultModal({ status, onRestart }: ResultModalProps) {
-  return (
-    <div role="dialog" data-testid="result-modal">
-      <h2>{status === 'won' ? '승리!' : '패배...'}</h2>
-      <button onClick={onRestart} data-testid="restart-button">
-        맵 선택으로 돌아가기
-      </button>
-    </div>
-  );
-}
+<template>
+  <div role="dialog" data-testid="result-modal">
+    <h2>{{ status === 'won' ? '승리!' : '패배...' }}</h2>
+    <button @click="onRestart" data-testid="restart-button">맵 선택으로 돌아가기</button>
+  </div>
+</template>
 ```
 
 - [ ] **Step 8: 테스트 통과 확인**
 
-Run: `npx vitest run src/components/ResultModal.test.tsx`
+Run: `npx vitest run src/components/ResultModal.test.ts`
 Expected: PASS
 
 - [ ] **Step 9: useEngineState 실패하는 테스트 작성**
 
-`src/hooks/useEngineState.test.ts`:
+`src/composables/useEngineState.test.ts`:
 ```ts
-import { act, renderHook } from '@testing-library/react';
+import { ref } from 'vue';
 import { describe, expect, it } from 'vitest';
 import { useEngineState } from './useEngineState';
 import { GameEngine } from '../engine/GameEngine';
@@ -2782,36 +2787,35 @@ import { MAPS } from '../engine/maps';
 
 describe('useEngineState', () => {
   it('returns a default snapshot when engine is null', () => {
-    const { result } = renderHook(() => useEngineState(null));
-    expect(result.current.status).toBe('playing');
-    expect(result.current.gold).toBe(0);
+    const engineRef = ref(null);
+    const snapshot = useEngineState(engineRef);
+    expect(snapshot.value.status).toBe('playing');
+    expect(snapshot.value.gold).toBe(0);
   });
 
   it('returns the engine snapshot and updates it after gold changes', () => {
     const engine = new GameEngine(MAPS[0]);
-    const { result } = renderHook(() => useEngineState(engine));
+    const engineRef = ref(engine);
+    const snapshot = useEngineState(engineRef);
 
-    const startingGold = result.current.gold;
+    const startingGold = snapshot.value.gold;
+    engine.placeTower(MAPS[0].buildableTiles[0], 'basic');
 
-    act(() => {
-      engine.placeTower(MAPS[0].buildableTiles[0], 'basic');
-    });
-
-    expect(result.current.gold).toBe(startingGold - 50);
+    expect(snapshot.value.gold).toBe(startingGold - 50);
   });
 });
 ```
 
 - [ ] **Step 10: 테스트 실패 확인**
 
-Run: `npx vitest run src/hooks/useEngineState.test.ts`
+Run: `npx vitest run src/composables/useEngineState.test.ts`
 Expected: FAIL
 
 - [ ] **Step 11: useEngineState 구현**
 
-`src/hooks/useEngineState.ts`:
+`src/composables/useEngineState.ts`:
 ```ts
-import { useEffect, useState } from 'react';
+import { ref, watch, type Ref } from 'vue';
 import type { EngineSnapshot, GameEngine } from '../engine/GameEngine';
 
 const EMPTY_SNAPSHOT: EngineSnapshot = {
@@ -2826,24 +2830,30 @@ const EMPTY_SNAPSHOT: EngineSnapshot = {
   status: 'playing',
 };
 
-export function useEngineState(engine: GameEngine | null): EngineSnapshot {
-  const [snapshot, setSnapshot] = useState<EngineSnapshot>(() => engine?.getSnapshot() ?? EMPTY_SNAPSHOT);
+export function useEngineState(engineRef: Ref<GameEngine | null>): Ref<EngineSnapshot> {
+  const snapshot = ref<EngineSnapshot>(engineRef.value?.getSnapshot() ?? EMPTY_SNAPSHOT) as Ref<EngineSnapshot>;
 
-  useEffect(() => {
-    if (!engine) {
-      setSnapshot(EMPTY_SNAPSHOT);
-      return;
-    }
-    setSnapshot(engine.getSnapshot());
-    const refresh = () => setSnapshot(engine.getSnapshot());
-    const unsubscribers = [
-      engine.on('gold-changed', refresh),
-      engine.on('lives-changed', refresh),
-      engine.on('wave-changed', refresh),
-      engine.on('status-changed', refresh),
-    ];
-    return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
-  }, [engine]);
+  watch(
+    engineRef,
+    (engine, _previous, onCleanup) => {
+      if (!engine) {
+        snapshot.value = EMPTY_SNAPSHOT;
+        return;
+      }
+      snapshot.value = engine.getSnapshot();
+      const refresh = () => {
+        snapshot.value = engine.getSnapshot();
+      };
+      const unsubscribers = [
+        engine.on('gold-changed', refresh),
+        engine.on('lives-changed', refresh),
+        engine.on('wave-changed', refresh),
+        engine.on('status-changed', refresh),
+      ];
+      onCleanup(() => unsubscribers.forEach((unsubscribe) => unsubscribe()));
+    },
+    { immediate: true }
+  );
 
   return snapshot;
 }
@@ -2851,27 +2861,27 @@ export function useEngineState(engine: GameEngine | null): EngineSnapshot {
 
 - [ ] **Step 12: 테스트 통과 확인**
 
-Run: `npx vitest run src/hooks/useEngineState.test.ts`
+Run: `npx vitest run src/composables/useEngineState.test.ts`
 Expected: PASS
 
-- [ ] **Step 13: App.test.tsx를 실제 화면 전환에 맞게 교체**
+- [ ] **Step 13: App.test.ts를 실제 화면 전환에 맞게 교체**
 
-`src/App.test.tsx` 전체를 아래로 교체:
-```tsx
-import { fireEvent, render, screen } from '@testing-library/react';
+`src/App.test.ts` 전체를 아래로 교체:
+```ts
+import { fireEvent, render, screen } from '@testing-library/vue';
 import { describe, expect, it } from 'vitest';
-import { App } from './App';
+import App from './App.vue';
 import { MAPS } from './engine/maps';
 
 describe('App', () => {
   it('shows the map select screen first', () => {
-    render(<App />);
+    render(App);
     expect(screen.getByTestId(`map-option-${MAPS[0].id}`)).toBeInTheDocument();
   });
 
-  it('switches to the game screen after selecting a map', () => {
-    render(<App />);
-    fireEvent.click(screen.getByTestId(`map-option-${MAPS[0].id}`));
+  it('switches to the game screen after selecting a map', async () => {
+    render(App);
+    await fireEvent.click(screen.getByTestId(`map-option-${MAPS[0].id}`));
     expect(screen.getByTestId('game-canvas')).toBeInTheDocument();
     expect(screen.getByTestId('hud-gold')).toBeInTheDocument();
   });
@@ -2880,67 +2890,64 @@ describe('App', () => {
 
 - [ ] **Step 14: 테스트 실패 확인**
 
-Run: `npx vitest run src/App.test.tsx`
+Run: `npx vitest run src/App.test.ts`
 Expected: FAIL (App이 아직 맵 선택 화면을 렌더링하지 않음)
 
-- [ ] **Step 15: App.tsx 실제 구현으로 교체**
+- [ ] **Step 15: App.vue 실제 구현으로 교체**
 
-`src/App.tsx`:
-```tsx
-import { useMemo, useState } from 'react';
-import { GameCanvas } from './components/GameCanvas';
-import { HUD } from './components/HUD';
-import { MapSelect } from './components/MapSelect';
-import { ResultModal } from './components/ResultModal';
-import { TowerShop } from './components/TowerShop';
+`src/App.vue`:
+```vue
+<script setup lang="ts">
+import { computed, ref } from 'vue';
+import GameCanvas from './components/GameCanvas.vue';
+import HUD from './components/HUD.vue';
+import MapSelect from './components/MapSelect.vue';
+import ResultModal from './components/ResultModal.vue';
+import TowerShop from './components/TowerShop.vue';
 import { GameEngine } from './engine/GameEngine';
 import { MAPS } from './engine/maps';
 import { TOWER_LIST } from './engine/towers';
-import { useEngineState } from './hooks/useEngineState';
+import { useEngineState } from './composables/useEngineState';
 
-export function App() {
-  const [mapId, setMapId] = useState<string | null>(null);
-  const [selectedTowerId, setSelectedTowerId] = useState<string | null>(null);
+const mapId = ref<string | null>(null);
+const selectedTowerId = ref<string | null>(null);
 
-  const map = useMemo(() => MAPS.find((m) => m.id === mapId) ?? null, [mapId]);
-  const engine = useMemo(() => (map ? new GameEngine(map) : null), [map]);
-  const state = useEngineState(engine);
+const map = computed(() => MAPS.find((m) => m.id === mapId.value) ?? null);
+const engine = computed(() => (map.value ? new GameEngine(map.value) : null));
+const state = useEngineState(engine);
 
-  const handleRestart = () => {
-    setMapId(null);
-    setSelectedTowerId(null);
-  };
-
-  if (!map || !engine) {
-    return <MapSelect maps={MAPS} onSelectMap={setMapId} />;
-  }
-
-  return (
-    <div className="app">
-      <HUD
-        gold={state.gold}
-        lives={state.lives}
-        waveNumber={state.waveNumber}
-        totalWaves={state.totalWaves}
-        isWaveInProgress={state.isWaveInProgress}
-        onStartWave={() => engine.startNextWave()}
-      />
-      <GameCanvas map={map} engine={engine} selectedTowerId={selectedTowerId} />
-      <TowerShop
-        towers={TOWER_LIST}
-        gold={state.gold}
-        selectedTowerId={selectedTowerId}
-        onSelectTower={setSelectedTowerId}
-      />
-      {state.status !== 'playing' && <ResultModal status={state.status} onRestart={handleRestart} />}
-    </div>
-  );
+function handleRestart() {
+  mapId.value = null;
+  selectedTowerId.value = null;
 }
+</script>
+
+<template>
+  <MapSelect v-if="!map || !engine" :maps="MAPS" :onSelectMap="(id) => (mapId = id)" />
+  <div v-else class="app">
+    <HUD
+      :gold="state.gold"
+      :lives="state.lives"
+      :waveNumber="state.waveNumber"
+      :totalWaves="state.totalWaves"
+      :isWaveInProgress="state.isWaveInProgress"
+      :onStartWave="() => engine!.startNextWave()"
+    />
+    <GameCanvas :map="map" :engine="engine" :selectedTowerId="selectedTowerId" />
+    <TowerShop
+      :towers="TOWER_LIST"
+      :gold="state.gold"
+      :selectedTowerId="selectedTowerId"
+      :onSelectTower="(id) => (selectedTowerId = id)"
+    />
+    <ResultModal v-if="state.status !== 'playing'" :status="state.status" :onRestart="handleRestart" />
+  </div>
+</template>
 ```
 
 - [ ] **Step 16: 테스트 통과 확인**
 
-Run: `npx vitest run src/App.test.tsx`
+Run: `npx vitest run src/App.test.ts`
 Expected: PASS
 
 - [ ] **Step 17: 전체 테스트 스위트 실행**
@@ -2951,13 +2958,13 @@ Expected: 모든 테스트 PASS
 - [ ] **Step 18: 커밋**
 
 ```bash
-git add src/components/MapSelect.tsx src/components/MapSelect.test.tsx src/components/ResultModal.tsx src/components/ResultModal.test.tsx src/hooks/useEngineState.ts src/hooks/useEngineState.test.ts src/App.tsx src/App.test.tsx
+git add src/components/MapSelect.vue src/components/MapSelect.test.ts src/components/ResultModal.vue src/components/ResultModal.test.ts src/composables/useEngineState.ts src/composables/useEngineState.test.ts src/App.vue src/App.test.ts
 git commit -m "feat: wire up map select, result modal, and full app screen flow"
 ```
 
 ---
 
-### Task 15: 수동 플레이테스트 및 밸런스 점검
+### Task 16: 수동 플레이테스트 및 밸런스 점검
 
 **Files:** 없음 (코드 변경 없이 수동 검증만 수행. 밸런스 조정이 필요하면 Task 2/3/4의 데이터 테이블 값만 수정)
 
@@ -2973,6 +2980,8 @@ Run: `npm run dev`
   - 웨이브 시작 버튼이 진행 중에는 비활성화되는지
   - 적이 끝까지 도달하면 라이프가 줄고, 0이 되면 패배 모달이 뜨는지
   - 보스 웨이브까지 클리어하면 승리 모달이 뜨는지
+  - 지휘 타워를 다른 타워 근처에 설치했을 때 주변 타워의 사거리/공격속도가
+    체감상 늘어나는지, 지휘 타워 자체는 절대 공격하지 않는지
 
 - [ ] **Step 3: 협곡(canyon), 요새(fortress) 맵도 동일하게 플레이해보고 난이도 체감 기록**
   - 초반 웨이브에서 타워 없이 몇 웨이브까지 버티는지
@@ -2981,7 +2990,7 @@ Run: `npm run dev`
 - [ ] **Step 4: 필요 시 밸런스 조정**
 
 문제가 발견되면 아래 파일의 상수만 조정한다 (로직 변경 없음):
-  - `src/engine/towers.ts`의 `cost`/`damage`/`fireRate`
+  - `src/engine/towers.ts`의 `cost`/`damage`/`fireRate`/`buffFactor`
   - `src/engine/enemies.ts`의 `hp`/`speed`/`reward`
   - `src/engine/waveGenerator.ts`의 `count = 5 + i * 2` 증가폭
 

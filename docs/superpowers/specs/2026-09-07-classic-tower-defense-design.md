@@ -19,31 +19,32 @@
 
 ## 2. 기술 스택
 
-- Vite + React + TypeScript
-- 렌더링: `<canvas>` 2D context (React는 UI 셸만 담당)
-- 테스트: Vitest (엔진 유닛 테스트), React Testing Library (가벼운 UI 테스트)
+- Vite + Vue 3 (Composition API, `<script setup>`) + TypeScript
+- 렌더링: `<canvas>` 2D context (Vue는 UI 셸만 담당)
+- 테스트: Vitest (엔진 유닛 테스트), Vue Testing Library (가벼운 UI 테스트)
 
 ## 3. 아키텍처
 
 ### 3.1 계층 구조
 
-- **게임 엔진 (`GameEngine`)**: React/DOM에 의존하지 않는 순수 TypeScript
+- **게임 엔진 (`GameEngine`)**: Vue/DOM에 의존하지 않는 순수 TypeScript
   클래스. 맵, 타워, 적, 투사체, 웨이브, 골드/라이프 상태를 전부 소유하고
   `update(dt)` 호출로 한 프레임만큼 시뮬레이션을 진행한다.
 - **렌더러 (`Renderer`)**: 매 프레임 `GameEngine`의 현재 상태를 읽어
   캔버스에 도형으로 그리기만 하는 상태 없는(stateless) 함수/클래스.
-- **React 레이어**: `GameCanvas`(rAF 루프 실행, engine.update + renderer.draw
+- **Vue 레이어**: `GameCanvas`(rAF 루프 실행, engine.update + renderer.draw
   호출), `HUD`(골드/라이프/웨이브/시작 버튼), `TowerShop`(타워 선택),
   `MapSelect`, `GameOverModal` / `VictoryModal`.
 
-### 3.2 엔진 ↔ React 연결
+### 3.2 엔진 ↔ Vue 연결
 
-- 적/투사체처럼 매 프레임 바뀌는 값은 React state에 절대 넣지 않고 캔버스에
-  직접 렌더링한다 (React 리렌더 비용을 피해 성능을 확보하기 위함).
+- 적/투사체처럼 매 프레임 바뀌는 값은 Vue의 반응형 상태(`ref`/`reactive`)에
+  절대 넣지 않고 캔버스에 직접 렌더링한다 (Vue 리렌더 비용을 피해 성능을
+  확보하기 위함).
 - 골드, 라이프, 현재 웨이브 번호, 게임 상태(진행중/승리/패배)처럼 드물게
-  바뀌는 값만 엔진이 이벤트(pub/sub)로 발행하고, React는 이를 구독해
+  바뀌는 값만 엔진이 이벤트(pub/sub)로 발행하고, Vue는 이를 구독해
   해당 값이 바뀔 때만 리렌더한다.
-- React → 엔진으로의 명령은 `engine.placeTower(pos, type)`,
+- Vue → 엔진으로의 명령은 `engine.placeTower(pos, type)`,
   `engine.startNextWave()` 같은 명령형 메서드 호출로 이루어진다.
 
 ### 3.3 지원형 타워(버프) 처리
@@ -120,9 +121,9 @@
    웨이브 종료/라이프 감소 체크 순으로 처리한다.
 3. `renderer.draw(ctx, engine.getState())`로 캔버스에 현재 프레임을 그린다.
 4. 골드/라이프/웨이브/게임 상태가 바뀐 경우에만 엔진이 이벤트를 발행하고,
-   React HUD는 그때만 리렌더한다.
+   Vue HUD는 그때만 리렌더한다.
 5. 사용자 입력(캔버스 클릭으로 타워 배치, HUD 버튼으로 웨이브 시작)은
-   React에서 `engine.xxx()` 메서드 호출로 엔진에 전달된다.
+   Vue에서 `engine.xxx()` 메서드 호출로 엔진에 전달된다.
 
 ## 6. 에러 처리
 
@@ -130,7 +131,7 @@
   `{ success: false, reason }` 형태로 반환하며, UI는 짧은 토스트/인라인
   메시지로 안내한다.
 - 라이프가 0이 되면 엔진은 루프를 멈추고 `game-over` 이벤트를 발행하며,
-  React는 이를 받아 모달을 표시한다 (크래시 없이 정상 종료 흐름으로 처리).
+  Vue는 이를 받아 모달을 표시한다 (크래시 없이 정상 종료 흐름으로 처리).
 - `localStorage`에 저장된 데이터가 손상되었거나 버전이 맞지 않는 경우
   `LocalStorageSaveService`가 파싱 실패를 잡아 `null`을 반환하고,
   이는 "저장된 게임 없음"으로 취급되어 앱이 죽지 않는다.
@@ -138,10 +139,10 @@
 ## 7. 테스트 전략
 
 - 게임 엔진(타워 타겟팅, 데미지 계산, 웨이브 스폰, 경제 로직)은
-  DOM/React에 의존하지 않으므로 Vitest로 순수 유닛 테스트를 작성한다.
+  DOM/Vue에 의존하지 않으므로 Vitest로 순수 유닛 테스트를 작성한다.
   이 프로젝트에서 가장 중요한 테스트 영역이다.
-- HUD/상점 등 React UI는 버튼 클릭이 엔진 메서드를 올바르게 호출하는지
-  정도만 React Testing Library로 가볍게 검증한다.
+- HUD/상점 등 Vue UI는 버튼 클릭이 엔진 메서드를 올바르게 호출하는지
+  정도만 Vue Testing Library로 가볍게 검증한다.
 - 캔버스 렌더링 자체와 밸런스(골드 곡선, 난이도 곡선)는 자동 테스트보다
   수동 플레이테스트로 확인한다.
 
