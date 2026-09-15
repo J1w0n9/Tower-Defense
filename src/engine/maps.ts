@@ -1,0 +1,69 @@
+import { computeBuildableTiles } from './path';
+import type { MapDefinition } from './types';
+import { buildWaveList } from './waveGenerator';
+
+const RUINED_STREET_PATH = [
+  { x: 0.5, y: 5.5 },
+  { x: 6.5, y: 5.5 },
+  { x: 6.5, y: 1.5 },
+  { x: 12.5, y: 1.5 },
+  { x: 12.5, y: 8.5 },
+  { x: 15.5, y: 8.5 },
+];
+
+const HIGHWAY_CHECKPOINT_PATH = [
+  { x: 0.5, y: 1.5 },
+  { x: 3.5, y: 1.5 },
+  { x: 3.5, y: 9.5 },
+  { x: 9.5, y: 9.5 },
+  { x: 9.5, y: 3.5 },
+  { x: 14.5, y: 3.5 },
+  { x: 14.5, y: 10.5 },
+  { x: 17.5, y: 10.5 },
+];
+
+const BASE_GATE_PATH = [
+  { x: 0.5, y: 6.5 },
+  { x: 4.5, y: 6.5 },
+  { x: 4.5, y: 1.5 },
+  { x: 9.5, y: 1.5 },
+  { x: 9.5, y: 9.5 },
+  { x: 14.5, y: 9.5 },
+  { x: 14.5, y: 4.5 },
+  { x: 19.5, y: 4.5 },
+];
+
+const RUINED_STREET: MapDefinition = {
+  id: 'ruined-street',
+  name: '폐허 시가지',
+  gridWidth: 16,
+  gridHeight: 10,
+  cellSize: 40,
+  path: RUINED_STREET_PATH,
+  buildableTiles: computeBuildableTiles(16, 10, RUINED_STREET_PATH),
+  waves: buildWaveList(['walker', 'runner', 'crawler'], 8, 'boss'),
+};
+
+const HIGHWAY_CHECKPOINT: MapDefinition = {
+  id: 'highway-checkpoint',
+  name: '고속도로 검문소',
+  gridWidth: 18,
+  gridHeight: 12,
+  cellSize: 40,
+  path: HIGHWAY_CHECKPOINT_PATH,
+  buildableTiles: computeBuildableTiles(18, 12, HIGHWAY_CHECKPOINT_PATH),
+  waves: buildWaveList(['runner', 'spitter', 'infected-dog', 'walker'], 10, 'boss'),
+};
+
+const BASE_GATE: MapDefinition = {
+  id: 'base-gate',
+  name: '군 기지 정문',
+  gridWidth: 20,
+  gridHeight: 12,
+  cellSize: 40,
+  path: BASE_GATE_PATH,
+  buildableTiles: computeBuildableTiles(20, 12, BASE_GATE_PATH),
+  waves: buildWaveList(['walker', 'tank', 'spitter', 'infected-dog', 'runner'], 12, 'boss'),
+};
+
+export const MAPS: MapDefinition[] = [RUINED_STREET, HIGHWAY_CHECKPOINT, BASE_GATE];
