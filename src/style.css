@@ -1,0 +1,48 @@
+:root {
+  --bg: #14180f;
+  --panel-bg: #1f2519;
+  --panel-bg-raised: #262e1f;
+  --panel-border: #3f4a34;
+  --text: #e7e3d3;
+  --text-muted: #99a08a;
+
+  --gold: #d9b32b;
+  --danger: #c1442b;
+  --danger-strong: #e0602b;
+  --success: #4ad94a;
+  --accent: #d9822b;
+
+  --scout: #c2b280;
+  --soldier: #8a8f99;
+  --sniper: #5c7794;
+  --minigunner: #c99a2e;
+  --flamethrower: #c1522f;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}

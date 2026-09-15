@@ -134,7 +134,7 @@ function restart(): void {
 
 <template>
   <MapSelect v-if="!selectedMap || !engine" @select="selectMap" />
-  <template v-else>
+  <div v-else class="game-shell">
     <HUD
       :gold="hud.gold"
       :lives="hud.lives"
@@ -146,19 +146,40 @@ function restart(): void {
       @load="loadGame"
     />
     <TowerShop :selected-tower-id="selectedTowerId" :gold="hud.gold" @select="selectTower" />
-    <TowerInspector
-      v-if="towerPanel"
-      :tower="towerPanel"
-      @upgrade="upgradeSelectedTower"
-      @sell="sellSelectedTower"
-      @close="closeTowerPanel"
-    />
-    <GameCanvas
-      :map="selectedMap"
-      :engine="engine"
-      :selected-tower-id="selectedTowerId"
-      @tower-selected="onTowerSelected"
-    />
+    <div class="game-area">
+      <GameCanvas
+        :map="selectedMap"
+        :engine="engine"
+        :selected-tower-id="selectedTowerId"
+        @tower-selected="onTowerSelected"
+      />
+      <TowerInspector
+        v-if="towerPanel"
+        :tower="towerPanel"
+        @upgrade="upgradeSelectedTower"
+        @sell="sellSelectedTower"
+        @close="closeTowerPanel"
+      />
+    </div>
     <GameStatusModal v-if="hud.status !== 'playing'" :status="hud.status" @restart="restart" />
-  </template>
+  </div>
 </template>
+
+<style scoped>
+.game-shell {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.game-area {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  overflow: hidden;
+}
+</style>
