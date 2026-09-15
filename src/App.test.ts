@@ -4,13 +4,15 @@ import App from './App.vue';
 import { MAPS } from './engine/maps';
 
 function mockCanvasRect(canvas: HTMLCanvasElement) {
+  // Match the mocked rect to the canvas's own internal resolution so displayed size == internal
+  // size (scale factor 1), independent of GameCanvas's CSS scaling (covered separately).
   vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({
     left: 0,
     top: 0,
-    right: 2000,
-    bottom: 2000,
-    width: 2000,
-    height: 2000,
+    right: canvas.width,
+    bottom: canvas.height,
+    width: canvas.width,
+    height: canvas.height,
     x: 0,
     y: 0,
     toJSON: () => {},
