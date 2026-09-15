@@ -252,7 +252,7 @@ describe('GameEngine wave and combat loop', () => {
     expect(spy).toHaveBeenCalledWith('lost');
   });
 
-  it('marks the game won once all waves are cleared and no enemies remain', () => {
+  it('marks the game won once all waves are cleared and no enemies remain (map without an endless pool)', () => {
     const engine = new GameEngine(TEST_MAP, 500, 20);
     engine.placeTower({ x: 2, y: 4 }, 'sniper');
     engine.startNextWave();
@@ -262,5 +262,27 @@ describe('GameEngine wave and combat loop', () => {
     engine.startNextWave();
     for (let i = 0; i < 40; i++) engine.update(0.5);
     expect(engine.status).toBe('won');
+  });
+});
+
+describe('GameEngine endless mode', () => {
+  const ENDLESS_MAP: MapDefinition = {
+    ...TEST_MAP,
+    enemyPool: ['walker', 'crawler'],
+    bossId: 'boss',
+  };
+
+  it('never reaches won once the fixed wave list is exhausted - it keeps generating waves', () => {
+    const engine = new GameEngine(ENDLESS_MAP, 500, 20);
+    engine.startNextWave();
+    for (let i = 0; i < 40; i++) engine.update(0.5);
+    engine.startNextWave();
+    for (let i = 0; i < 40; i++) engine.update(0.5);
+    expect(engine.status).toBe('playing');
+
+    expect(engine.startNextWave()).toBe(true);
+    expect(engine.enemies).toHaveLength(0);
+    engine.update(1);
+    expect(engine.enemies.length).toBeGreaterThan(0);
   });
 });

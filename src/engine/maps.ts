@@ -33,6 +33,11 @@ const BASE_GATE_PATH = [
   { x: 19.5, y: 4.5 },
 ];
 
+const RUINED_STREET_ENEMY_POOL = ['walker', 'runner', 'crawler'];
+const HIGHWAY_CHECKPOINT_ENEMY_POOL = ['runner', 'spitter', 'infected-dog', 'walker'];
+const BASE_GATE_ENEMY_POOL = ['walker', 'tank', 'spitter', 'infected-dog', 'runner'];
+const BOSS_ID = 'boss';
+
 const RUINED_STREET: MapDefinition = {
   id: 'ruined-street',
   name: '폐허 시가지',
@@ -41,7 +46,9 @@ const RUINED_STREET: MapDefinition = {
   cellSize: 56,
   path: RUINED_STREET_PATH,
   buildableTiles: computeBuildableTiles(16, 10, RUINED_STREET_PATH),
-  waves: buildWaveList(['walker', 'runner', 'crawler'], 8, 'boss'),
+  waves: buildWaveList(RUINED_STREET_ENEMY_POOL, 8, BOSS_ID),
+  enemyPool: RUINED_STREET_ENEMY_POOL,
+  bossId: BOSS_ID,
 };
 
 const HIGHWAY_CHECKPOINT: MapDefinition = {
@@ -52,7 +59,9 @@ const HIGHWAY_CHECKPOINT: MapDefinition = {
   cellSize: 56,
   path: HIGHWAY_CHECKPOINT_PATH,
   buildableTiles: computeBuildableTiles(18, 12, HIGHWAY_CHECKPOINT_PATH),
-  waves: buildWaveList(['runner', 'spitter', 'infected-dog', 'walker'], 10, 'boss'),
+  waves: buildWaveList(HIGHWAY_CHECKPOINT_ENEMY_POOL, 10, BOSS_ID),
+  enemyPool: HIGHWAY_CHECKPOINT_ENEMY_POOL,
+  bossId: BOSS_ID,
 };
 
 const BASE_GATE: MapDefinition = {
@@ -63,7 +72,9 @@ const BASE_GATE: MapDefinition = {
   cellSize: 56,
   path: BASE_GATE_PATH,
   buildableTiles: computeBuildableTiles(20, 12, BASE_GATE_PATH),
-  waves: buildWaveList(['walker', 'tank', 'spitter', 'infected-dog', 'runner'], 12, 'boss'),
+  waves: buildWaveList(BASE_GATE_ENEMY_POOL, 12, BOSS_ID),
+  enemyPool: BASE_GATE_ENEMY_POOL,
+  bossId: BOSS_ID,
 };
 
 export const MAPS: MapDefinition[] = [RUINED_STREET, HIGHWAY_CHECKPOINT, BASE_GATE];

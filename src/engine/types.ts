@@ -67,6 +67,9 @@ export interface MapDefinition {
   path: Point[];
   buildableTiles: Point[];
   waves: WaveDefinition[];
+  /** When both are set, GameEngine spawns endless waves (via generateEndlessWave) once `waves` runs out. */
+  enemyPool?: string[];
+  bossId?: string;
 }
 
 export type GameStatus = 'playing' | 'won' | 'lost';

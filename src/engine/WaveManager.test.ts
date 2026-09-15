@@ -55,4 +55,26 @@ describe('WaveManager', () => {
     expect(manager.currentWaveNumber).toBe(0);
     expect(manager.hasMoreWaves).toBe(true);
   });
+
+  it('without a generator, hasMoreWaves becomes false once the fixed list is exhausted', () => {
+    const manager = new WaveManager(WAVES);
+    manager.startNextWave();
+    manager.startNextWave();
+    expect(manager.hasMoreWaves).toBe(false);
+  });
+
+  it('with a generator, hasMoreWaves stays true past the fixed list, and startNextWave uses it', () => {
+    const generateWave = (waveNumber: number) => ({
+      waveNumber,
+      spawns: [{ enemyId: 'endless', count: waveNumber, spawnIntervalSec: 0.5 }],
+    });
+    const manager = new WaveManager(WAVES, generateWave);
+    manager.startNextWave();
+    manager.startNextWave();
+    expect(manager.hasMoreWaves).toBe(true);
+
+    expect(manager.startNextWave()).toBe(true);
+    expect(manager.currentWaveNumber).toBe(3);
+    expect(manager.update(1)).toEqual(['endless']);
+  });
 });

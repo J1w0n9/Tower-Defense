@@ -30,4 +30,11 @@ describe('MAPS', () => {
       expect(map.buildableTiles.length).toBeGreaterThan(0);
     }
   });
+
+  it('gives every map an enemy pool and boss id for endless mode', () => {
+    for (const map of MAPS) {
+      expect(map.enemyPool?.length).toBeGreaterThan(0);
+      expect(map.bossId).toBeTruthy();
+    }
+  });
 });

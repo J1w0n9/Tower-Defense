@@ -21,6 +21,11 @@ describe('HUD', () => {
     expect(screen.getByRole('button', { name: /웨이브/ })).toBeDisabled();
   });
 
+  it('shows an endless-mode indicator once the wave number passes the fixed total', () => {
+    render(HUD, { props: { gold: 250, lives: 15, waveNumber: 9, totalWaves: 8, status: 'playing' } });
+    expect(screen.getByText('웨이브: 9 (무한)')).toBeInTheDocument();
+  });
+
   it('emits save and load when their buttons are clicked', async () => {
     const { emitted } = render(HUD, { props: { gold: 250, lives: 15, waveNumber: 0, totalWaves: 8, status: 'playing' } });
     await fireEvent.click(screen.getByRole('button', { name: '저장' }));

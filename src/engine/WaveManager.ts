@@ -7,14 +7,18 @@ interface SpawnQueueEntry {
   remainingCount: number;
 }
 
+export type WaveGenerator = (waveNumber: number) => WaveDefinition;
+
 export class WaveManager {
   private waves: WaveDefinition[];
   private currentWaveIndex = -1;
   private spawnQueue: SpawnQueueEntry[] = [];
   private spawningComplete = true;
+  private readonly generateWave: WaveGenerator | undefined;
 
-  constructor(waves: WaveDefinition[]) {
+  constructor(waves: WaveDefinition[], generateWave?: WaveGenerator) {
     this.waves = waves;
+    this.generateWave = generateWave;
   }
 
   get totalWaves(): number {
@@ -26,7 +30,7 @@ export class WaveManager {
   }
 
   get hasMoreWaves(): boolean {
-    return this.currentWaveIndex + 1 < this.waves.length;
+    return this.currentWaveIndex + 1 < this.waves.length || !!this.generateWave;
   }
 
   get isSpawningComplete(): boolean {
@@ -36,7 +40,8 @@ export class WaveManager {
   startNextWave(): boolean {
     if (!this.hasMoreWaves) return false;
     this.currentWaveIndex += 1;
-    const wave = this.waves[this.currentWaveIndex];
+    const waveNumber = this.currentWaveIndex + 1;
+    const wave = waveNumber <= this.waves.length ? this.waves[this.currentWaveIndex] : this.generateWave!(waveNumber);
     this.spawnQueue = wave.spawns.map((spawn) => ({
       enemyId: spawn.enemyId,
       timeRemaining: 0,

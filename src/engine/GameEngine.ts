@@ -10,6 +10,7 @@ import type { SerializedGameState } from '../persistence/SaveService';
 import { EventEmitter } from './EventEmitter';
 import { distance } from './vector';
 import { WaveManager } from './WaveManager';
+import { generateEndlessWave } from './waveGenerator';
 
 export interface EngineActionResult {
   success: boolean;
@@ -80,7 +81,10 @@ export class GameEngine {
   constructor(map: MapDefinition, startingGold: number, startingLives: number) {
     this.map = map;
     this.economy = new Economy(startingGold, startingLives);
-    this.waveManager = new WaveManager(map.waves);
+    const { enemyPool, bossId } = map;
+    const endlessGenerator =
+      enemyPool && bossId ? (waveNumber: number) => generateEndlessWave(waveNumber, enemyPool, bossId) : undefined;
+    this.waveManager = new WaveManager(map.waves, endlessGenerator);
     this.pathLength = getPathLength(map.path);
   }
 

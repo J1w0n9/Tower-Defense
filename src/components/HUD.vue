@@ -21,7 +21,10 @@ const emit = defineEmits<{
     <div class="stats">
       <span class="stat gold">골드: {{ gold }}</span>
       <span class="stat lives">라이프: {{ lives }}</span>
-      <span class="stat wave">웨이브: {{ waveNumber }} / {{ totalWaves }}</span>
+      <span class="stat wave">
+        웨이브: {{ waveNumber }} <template v-if="waveNumber > totalWaves">(무한)</template
+        ><template v-else>/ {{ totalWaves }}</template>
+      </span>
     </div>
     <div class="actions">
       <button type="button" class="primary" :disabled="status !== 'playing'" @click="emit('start-wave')">
