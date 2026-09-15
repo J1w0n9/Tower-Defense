@@ -22,4 +22,10 @@ describe('TowerShop', () => {
     render(TowerShop, { props: { selectedTowerId: null, gold: 10 } });
     expect(screen.getByText(new RegExp(expensive.name)).closest('button')).toBeDisabled();
   });
+
+  it('keeps the currently-selected tower clickable even if gold drops below its cost', () => {
+    const expensive = TOWER_LIST.find((t) => t.cost > 10)!;
+    render(TowerShop, { props: { selectedTowerId: expensive.id, gold: 10 } });
+    expect(screen.getByText(new RegExp(expensive.name)).closest('button')).not.toBeDisabled();
+  });
 });

@@ -65,4 +65,27 @@ describe('GameCanvas', () => {
 
     expect(spy).not.toHaveBeenCalled();
   });
+
+  it('emits tower-selected with the id of an existing tower when clicked with no shop tower chosen', async () => {
+    const engine = new GameEngine(MAP, 500, 20);
+    engine.placeTower({ x: 1, y: 0 }, 'scout');
+    const { container, emitted } = render(GameCanvas, { props: { map: MAP, engine, selectedTowerId: null } });
+    const canvas = container.querySelector('canvas') as HTMLCanvasElement;
+    mockRect(canvas);
+
+    await fireEvent.click(canvas, { clientX: 45, clientY: 5 });
+
+    expect(emitted()['tower-selected']).toEqual([[engine.towers[0].id]]);
+  });
+
+  it('emits tower-selected with null when clicking an empty cell with no shop tower chosen', async () => {
+    const engine = new GameEngine(MAP, 500, 20);
+    const { container, emitted } = render(GameCanvas, { props: { map: MAP, engine, selectedTowerId: null } });
+    const canvas = container.querySelector('canvas') as HTMLCanvasElement;
+    mockRect(canvas);
+
+    await fireEvent.click(canvas, { clientX: 45, clientY: 5 });
+
+    expect(emitted()['tower-selected']).toEqual([[null]]);
+  });
 });

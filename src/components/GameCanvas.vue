@@ -12,6 +12,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'placement-result': [result: EngineActionResult];
+  'tower-selected': [towerId: string | null];
 }>();
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
@@ -36,13 +37,20 @@ onUnmounted(() => {
 });
 
 function onCanvasClick(event: MouseEvent): void {
-  if (!props.selectedTowerId || !canvasRef.value) return;
+  if (!canvasRef.value) return;
   const rect = canvasRef.value.getBoundingClientRect();
   const cell = {
     x: Math.floor((event.clientX - rect.left) / props.map.cellSize),
     y: Math.floor((event.clientY - rect.top) / props.map.cellSize),
   };
-  emit('placement-result', props.engine.placeTower(cell, props.selectedTowerId));
+
+  if (props.selectedTowerId) {
+    emit('placement-result', props.engine.placeTower(cell, props.selectedTowerId));
+    return;
+  }
+
+  const existing = props.engine.towers.find((t) => t.position.x === cell.x && t.position.y === cell.y);
+  emit('tower-selected', existing?.id ?? null);
 }
 </script>
 

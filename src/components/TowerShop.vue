@@ -17,7 +17,7 @@ const emit = defineEmits<{
       v-for="tower in TOWER_LIST"
       :key="tower.id"
       type="button"
-      :disabled="gold < tower.cost"
+      :disabled="gold < tower.cost && selectedTowerId !== tower.id"
       :class="{ selected: selectedTowerId === tower.id }"
       @click="emit('select', tower.id)"
     >
