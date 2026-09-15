@@ -57,6 +57,25 @@ describe('App', () => {
     expect(screen.getByText('스카웃 (Lv.2)')).toBeInTheDocument();
   });
 
+  it('selling a placed tower refunds gold and removes the inspector panel', async () => {
+    const { container } = render(App);
+    await fireEvent.click(screen.getByText(MAPS[0].name));
+    const canvas = container.querySelector('canvas') as HTMLCanvasElement;
+    mockCanvasRect(canvas);
+    const tile = MAPS[0].buildableTiles[0];
+
+    await fireEvent.click(screen.getByText('스카웃 (40G)'));
+    await clickTile(canvas, tile);
+    await fireEvent.click(screen.getByText('스카웃 (40G)'));
+    await clickTile(canvas, tile);
+    expect(screen.getByText('골드: 110')).toBeInTheDocument();
+
+    await fireEvent.click(screen.getByRole('button', { name: /판매/ }));
+
+    expect(screen.getByText('골드: 130')).toBeInTheDocument();
+    expect(screen.queryByText(/스카웃 \(Lv\./)).not.toBeInTheDocument();
+  });
+
   it('save then load restores gold to the value at save time', async () => {
     const { container } = render(App);
     await fireEvent.click(screen.getByText(MAPS[0].name));

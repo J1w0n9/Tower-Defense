@@ -22,7 +22,13 @@ const selectedMap = shallowRef<MapDefinition | null>(null);
 const engine = shallowRef<GameEngine | null>(null);
 const selectedTowerId = ref<string | null>(null);
 const selectedTowerInstanceId = ref<string | null>(null);
-const towerPanel = ref<{ name: string; level: number; upgradeCost: number; canUpgrade: boolean } | null>(null);
+const towerPanel = ref<{
+  name: string;
+  level: number;
+  upgradeCost: number;
+  canUpgrade: boolean;
+  sellRefund: number;
+} | null>(null);
 
 const hud = reactive({
   gold: 0,
@@ -69,7 +75,13 @@ function selectTower(towerId: string): void {
 function refreshTowerPanel(): void {
   const tower = engine.value?.towers.find((t) => t.id === selectedTowerInstanceId.value);
   towerPanel.value = tower
-    ? { name: tower.stats.name, level: tower.level, upgradeCost: tower.upgradeCost, canUpgrade: tower.canUpgrade() }
+    ? {
+        name: tower.stats.name,
+        level: tower.level,
+        upgradeCost: tower.upgradeCost,
+        canUpgrade: tower.canUpgrade(),
+        sellRefund: tower.sellValue,
+      }
     : null;
 }
 
@@ -82,6 +94,12 @@ function upgradeSelectedTower(): void {
   if (!selectedTowerInstanceId.value) return;
   engine.value?.upgradeTower(selectedTowerInstanceId.value);
   refreshTowerPanel();
+}
+
+function sellSelectedTower(): void {
+  if (!selectedTowerInstanceId.value) return;
+  engine.value?.sellTower(selectedTowerInstanceId.value);
+  closeTowerPanel();
 }
 
 function closeTowerPanel(): void {
@@ -128,7 +146,13 @@ function restart(): void {
       @load="loadGame"
     />
     <TowerShop :selected-tower-id="selectedTowerId" :gold="hud.gold" @select="selectTower" />
-    <TowerInspector v-if="towerPanel" :tower="towerPanel" @upgrade="upgradeSelectedTower" @close="closeTowerPanel" />
+    <TowerInspector
+      v-if="towerPanel"
+      :tower="towerPanel"
+      @upgrade="upgradeSelectedTower"
+      @sell="sellSelectedTower"
+      @close="closeTowerPanel"
+    />
     <GameCanvas
       :map="selectedMap"
       :engine="engine"

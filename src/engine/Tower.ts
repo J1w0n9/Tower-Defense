@@ -58,6 +58,10 @@ export class Tower {
     return Math.round(this.stats.cost * 0.75 * this.level * this.upgradeCostMultiplier);
   }
 
+  get sellValue(): number {
+    return Math.round(this.stats.cost * 0.5 * this.level);
+  }
+
   canUpgrade(): boolean {
     return this.level < MAX_LEVEL;
   }

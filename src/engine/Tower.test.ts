@@ -25,6 +25,13 @@ describe('Tower basics', () => {
     expect(tower.damage).toBeGreaterThan(baseDamage);
   });
 
+  it('scales sell value with level', () => {
+    const tower = new Tower('t1', TOWERS_BY_ID.scout, { x: 0, y: 0 });
+    const baseValue = tower.sellValue;
+    tower.upgrade();
+    expect(tower.sellValue).toBeGreaterThan(baseValue);
+  });
+
   it('refuses to upgrade past the max level', () => {
     const tower = new Tower('t1', TOWERS_BY_ID.scout, { x: 0, y: 0 });
     tower.upgrade();

@@ -119,6 +119,18 @@ export class GameEngine {
     return { success: true };
   }
 
+  sellTower(towerId: string): EngineActionResult {
+    const index = this.towers.findIndex((t) => t.id === towerId);
+    if (index === -1) return { success: false, reason: 'not-found' };
+
+    const tower = this.towers[index];
+    const refund = tower.sellValue;
+    this.towers.splice(index, 1);
+    this.economy.addGold(refund);
+    this.events.emit('gold-changed', this.economy.gold);
+    return { success: true };
+  }
+
   cycleSupportMode(towerId: string): void {
     this.towers.find((t) => t.id === towerId)?.cycleSupportMode();
   }

@@ -79,6 +79,36 @@ describe('GameEngine.upgradeTower', () => {
   });
 });
 
+describe('GameEngine.sellTower', () => {
+  it('removes the tower and refunds half its level-scaled cost', () => {
+    const engine = new GameEngine(TEST_MAP, 500, 20);
+    engine.placeTower({ x: 2, y: 4 }, 'scout');
+    const tower = engine.towers[0];
+    engine.upgradeTower(tower.id);
+    const goldBefore = engine.economy.gold;
+
+    const result = engine.sellTower(tower.id);
+
+    expect(result.success).toBe(true);
+    expect(engine.towers).toHaveLength(0);
+    expect(engine.economy.gold).toBe(goldBefore + Math.round(TOWERS_BY_ID.scout.cost * 0.5 * tower.level));
+  });
+
+  it('emits gold-changed on sell', () => {
+    const engine = new GameEngine(TEST_MAP, 500, 20);
+    engine.placeTower({ x: 2, y: 4 }, 'scout');
+    const spy = vi.fn();
+    engine.events.on('gold-changed', spy);
+    engine.sellTower(engine.towers[0].id);
+    expect(spy).toHaveBeenCalledWith(engine.economy.gold);
+  });
+
+  it('fails when the tower does not exist', () => {
+    const engine = new GameEngine(TEST_MAP, 500, 20);
+    expect(engine.sellTower('nope')).toEqual({ success: false, reason: 'not-found' });
+  });
+});
+
 describe('GameEngine support buffs', () => {
   it('buffs nearby combat towers when a commander is in range', () => {
     const engine = new GameEngine(TEST_MAP, 500, 20);
