@@ -47,6 +47,13 @@ export class WaveManager {
     return true;
   }
 
+  /** Marks the first `waveNumber` waves as already completed, with no spawns queued. Used to restore a save. */
+  skipToWave(waveNumber: number): void {
+    this.currentWaveIndex = waveNumber - 1;
+    this.spawnQueue = [];
+    this.spawningComplete = true;
+  }
+
   update(dt: number): string[] {
     const spawned: string[] = [];
     for (const entry of this.spawnQueue) {

@@ -6,6 +6,7 @@ import { Projectile } from './Projectile';
 import { Tower } from './Tower';
 import { TOWERS_BY_ID } from './towers';
 import type { GameEventMap, GameStatus, MapDefinition, Point, SupportMode } from './types';
+import type { SerializedGameState } from '../persistence/SaveService';
 import { EventEmitter } from './EventEmitter';
 import { distance } from './vector';
 import { WaveManager } from './WaveManager';
@@ -35,6 +36,21 @@ export interface EnemySnapshot {
 export interface ProjectileSnapshot {
   id: string;
   position: Point;
+}
+
+export interface TowerSaveEntry {
+  towerTypeId: string;
+  position: Point;
+  level: number;
+  supportMode: SupportMode | undefined;
+}
+
+export interface GameSaveState extends SerializedGameState {
+  mapId: string;
+  gold: number;
+  lives: number;
+  completedWaves: number;
+  towers: TowerSaveEntry[];
 }
 
 export interface EngineSnapshot {
@@ -105,6 +121,47 @@ export class GameEngine {
 
   cycleSupportMode(towerId: string): void {
     this.towers.find((t) => t.id === towerId)?.cycleSupportMode();
+  }
+
+  serialize(): GameSaveState {
+    return {
+      mapId: this.map.id,
+      gold: this.economy.gold,
+      lives: this.economy.lives,
+      completedWaves: this.waveManager.currentWaveNumber,
+      towers: this.towers.map((tower) => ({
+        towerTypeId: tower.stats.id,
+        position: tower.position,
+        level: tower.level,
+        supportMode: tower.supportMode,
+      })),
+    };
+  }
+
+  /** Restores gold/lives/towers/wave progress from a save. Mid-wave enemies/projectiles are not preserved. */
+  loadSnapshot(state: GameSaveState): void {
+    this.economy.gold = state.gold;
+    this.economy.lives = state.lives;
+    this.enemies = [];
+    this.projectiles = [];
+    this.towers.length = 0;
+    for (const entry of state.towers) {
+      const stats = TOWERS_BY_ID[entry.towerTypeId];
+      if (!stats) continue;
+      const tower = new Tower(this.generateId('tower'), stats, entry.position);
+      for (let i = 1; i < entry.level; i++) tower.upgrade();
+      if (entry.supportMode) tower.supportMode = entry.supportMode;
+      this.towers.push(tower);
+    }
+    this.waveManager.skipToWave(state.completedWaves);
+    this.status = 'playing';
+    this.events.emit('gold-changed', this.economy.gold);
+    this.events.emit('lives-changed', this.economy.lives);
+    this.events.emit('wave-changed', {
+      current: this.waveManager.currentWaveNumber,
+      total: this.waveManager.totalWaves,
+    });
+    this.events.emit('status-changed', 'playing');
   }
 
   startNextWave(): boolean {

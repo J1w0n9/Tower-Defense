@@ -38,4 +38,21 @@ describe('WaveManager', () => {
     expect(manager.update(1)).toEqual([]);
     expect(manager.isSpawningComplete).toBe(true);
   });
+
+  it('skipToWave marks the given wave number complete without queuing spawns', () => {
+    const manager = new WaveManager(WAVES);
+    manager.skipToWave(1);
+    expect(manager.currentWaveNumber).toBe(1);
+    expect(manager.isSpawningComplete).toBe(true);
+    expect(manager.update(1)).toEqual([]);
+    expect(manager.hasMoreWaves).toBe(true);
+  });
+
+  it('skipToWave(0) resets to before the first wave', () => {
+    const manager = new WaveManager(WAVES);
+    manager.startNextWave();
+    manager.skipToWave(0);
+    expect(manager.currentWaveNumber).toBe(0);
+    expect(manager.hasMoreWaves).toBe(true);
+  });
 });

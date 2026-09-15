@@ -106,6 +106,49 @@ describe('GameEngine support buffs', () => {
   });
 });
 
+describe('GameEngine save/load', () => {
+  it('serializes gold, lives, towers, and completed wave count', () => {
+    const engine = new GameEngine(TEST_MAP, 500, 20);
+    engine.placeTower({ x: 2, y: 4 }, 'sniper');
+    engine.startNextWave();
+
+    const state = engine.serialize();
+    expect(state).toEqual({
+      mapId: 'test',
+      gold: 500 - TOWERS_BY_ID.sniper.cost,
+      lives: 20,
+      completedWaves: 1,
+      towers: [{ towerTypeId: 'sniper', position: { x: 2, y: 4 }, level: 1, supportMode: undefined }],
+    });
+  });
+
+  it('loadSnapshot restores gold, lives, towers (with level/mode), and wave progress', () => {
+    const source = new GameEngine(TEST_MAP, 500, 20);
+    source.placeTower({ x: 2, y: 4 }, 'scout');
+    source.upgradeTower(source.towers[0].id);
+    source.placeTower({ x: 1, y: 4 }, 'dj');
+    source.cycleSupportMode(source.towers[1].id);
+    source.startNextWave();
+    const state = source.serialize();
+
+    const restored = new GameEngine(TEST_MAP, 999, 1);
+    restored.loadSnapshot(state);
+
+    expect(restored.economy.gold).toBe(state.gold);
+    expect(restored.economy.lives).toBe(20);
+    expect(restored.status).toBe('playing');
+    expect(restored.towers).toHaveLength(2);
+    const scout = restored.towers.find((t) => t.stats.id === 'scout')!;
+    expect(scout.level).toBe(2);
+    const dj = restored.towers.find((t) => t.stats.id === 'dj')!;
+    expect(dj.supportMode).toBe('damage');
+    expect(restored.getSnapshot().waveNumber).toBe(1);
+
+    restored.update(1);
+    expect(restored.enemies).toHaveLength(0);
+  });
+});
+
 describe('GameEngine.getSnapshot', () => {
   it('exposes render-relevant tower and enemy state', () => {
     const engine = new GameEngine(TEST_MAP, 500, 20);

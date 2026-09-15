@@ -11,6 +11,8 @@ defineProps<{
 
 const emit = defineEmits<{
   'start-wave': [];
+  save: [];
+  load: [];
 }>();
 </script>
 
@@ -20,5 +22,7 @@ const emit = defineEmits<{
     <span>라이프: {{ lives }}</span>
     <span>웨이브: {{ waveNumber }} / {{ totalWaves }}</span>
     <button type="button" :disabled="status !== 'playing'" @click="emit('start-wave')">다음 웨이브 시작</button>
+    <button type="button" @click="emit('save')">저장</button>
+    <button type="button" @click="emit('load')">불러오기</button>
   </div>
 </template>

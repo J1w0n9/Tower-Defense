@@ -20,4 +20,12 @@ describe('HUD', () => {
     render(HUD, { props: { gold: 250, lives: 0, waveNumber: 8, totalWaves: 8, status: 'lost' } });
     expect(screen.getByRole('button', { name: /웨이브/ })).toBeDisabled();
   });
+
+  it('emits save and load when their buttons are clicked', async () => {
+    const { emitted } = render(HUD, { props: { gold: 250, lives: 15, waveNumber: 0, totalWaves: 8, status: 'playing' } });
+    await fireEvent.click(screen.getByRole('button', { name: '저장' }));
+    await fireEvent.click(screen.getByRole('button', { name: '불러오기' }));
+    expect(emitted().save).toBeTruthy();
+    expect(emitted().load).toBeTruthy();
+  });
 });
