@@ -2,7 +2,19 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 브라우저에서 동작하는 클래식 타워 디펜스 웹게임(맵 3개, 타워 6종[전투형 5+지원형 1], 적 6종+보스)을 Vue + Canvas로 구현한다.
+> **구현 완료 (2026-09-15):** 이 계획은 이후 좀비 아포칼립스 테마로 확정되면서
+> 타워가 6종(전투 5 + 지원 1)에서 7종(전투 5 + 지원 2: 사령관/DJ)으로
+> 늘었고, 버스트/예열/화상 DoT/모드 전환 버프 같은 새 메커닉이 추가됐다.
+> 아래 태스크의 스캐폴드·엔진 기반 구조(타입, 이벤트, 벡터, 경로, 웨이브,
+> 투사체, 이코노미, 웨이브 매니저, SaveService, Vue 컴포넌트 골격)는
+> 실제 구현에도 그대로 반영됐지만, 타워/적 데이터·`Tower` 클래스·지원형
+> 버프 처리 태스크의 세부 코드는 최신 스펙(`2026-09-07-classic-tower-defense-design.md`
+> 3.3/3.5/4.2절)에 맞게 다시 작성되어 아래 예시 코드와 다르다. 실제 구현은
+> `src/engine/**`, `src/render/**`, `src/components/**`를 소스 오브 트루스로
+> 참고할 것 — 이 문서는 스캐폴드 순서와 테마 무관 인프라의 설계 근거로만
+> 유효하다.
+
+**Goal:** 브라우저에서 동작하는 클래식 타워 디펜스 웹게임(맵 3개, 타워 7종[전투형 5+지원형 2], 적 6종+보스)을 Vue + Canvas로 구현한다.
 
 **Architecture:** DOM/Vue에 의존하지 않는 순수 TypeScript 게임 엔진(`src/engine/**`)이 시뮬레이션 전체를 소유하고, 얇은 Canvas 렌더러가 매 프레임 엔진 상태를 그림. Vue는 HUD/상점/모달 등 UI 셸만 담당하며 이벤트 구독으로만 엔진과 통신한다.
 
