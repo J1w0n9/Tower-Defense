@@ -5,7 +5,15 @@ const COLORS = {
   background: '#2f3a2f',
   path: '#5c5240',
   buildable: 'rgba(255,255,255,0.05)',
-  combatTower: '#7a7a5f',
+  combatTowerById: {
+    scout: '#c2b280',
+    soldier: '#8a8f99',
+    sniper: '#3d4a5c',
+    minigunner: '#b8860b',
+    flamethrower: '#b0402a',
+  } as Record<string, string>,
+  combatTowerFallback: '#7a7a5f',
+  towerOutline: 'rgba(0,0,0,0.45)',
   supportFixed: '#d9822b',
   supportByMode: {
     range: '#d9b32b',
@@ -21,7 +29,7 @@ const COLORS = {
 };
 
 export function getTowerColor(tower: TowerSnapshot): string {
-  if (!tower.isSupport) return COLORS.combatTower;
+  if (!tower.isSupport) return COLORS.combatTowerById[tower.towerTypeId] ?? COLORS.combatTowerFallback;
   if (!tower.supportMode) return COLORS.supportFixed;
   return COLORS.supportByMode[tower.supportMode];
 }
@@ -54,8 +62,18 @@ export function drawGame(ctx: CanvasRenderingContext2D, map: MapDefinition, snap
   }
 
   for (const tower of snapshot.towers) {
+    const px = (tower.position.x + 0.5) * cellSize;
+    const py = (tower.position.y + 0.5) * cellSize;
+    const radius = cellSize * 0.35;
+
     ctx.fillStyle = getTowerColor(tower);
-    ctx.fillRect(tower.position.x * cellSize, tower.position.y * cellSize, cellSize, cellSize);
+    ctx.beginPath();
+    ctx.arc(px, py, radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = COLORS.towerOutline;
+    ctx.lineWidth = 2;
+    ctx.stroke();
   }
 
   for (const enemy of snapshot.enemies) {

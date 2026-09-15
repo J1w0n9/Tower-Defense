@@ -62,6 +62,14 @@ describe('getTowerColor', () => {
     const colors = new Set([getTowerColor(djRange), getTowerColor(djDamage), getTowerColor(djDiscount)]);
     expect(colors.size).toBe(3);
   });
+
+  it('gives each of the 5 combat tower types its own distinct color', () => {
+    const ids = ['scout', 'soldier', 'sniper', 'minigunner', 'flamethrower'];
+    const colors = new Set(
+      ids.map((id) => getTowerColor({ id: id, towerTypeId: id, position: { x: 0, y: 0 }, isSupport: false, range: 1 }))
+    );
+    expect(colors.size).toBe(5);
+  });
 });
 
 describe('getEnemyColor', () => {
@@ -87,5 +95,13 @@ describe('drawGame', () => {
     });
     drawGame(ctx, MAP, snapshot);
     expect(ctx.arc).toHaveBeenCalledTimes(2);
+  });
+
+  it('draws towers as circles too', () => {
+    const ctx = createMockContext();
+    const snapshot = baseSnapshot({ towers: [combatTower] });
+    drawGame(ctx, MAP, snapshot);
+    expect(ctx.arc).toHaveBeenCalledTimes(1);
+    expect(ctx.stroke).toHaveBeenCalled();
   });
 });
