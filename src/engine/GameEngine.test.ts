@@ -106,6 +106,26 @@ describe('GameEngine support buffs', () => {
   });
 });
 
+describe('GameEngine.getSnapshot', () => {
+  it('exposes render-relevant tower and enemy state', () => {
+    const engine = new GameEngine(TEST_MAP, 500, 20);
+    engine.placeTower({ x: 2, y: 4 }, 'dj');
+    engine.startNextWave();
+    engine.update(1);
+
+    const snapshot = engine.getSnapshot();
+    expect(snapshot.towers).toEqual([
+      expect.objectContaining({ towerTypeId: 'dj', isSupport: true, supportMode: 'range' }),
+    ]);
+    expect(snapshot.enemies).toHaveLength(1);
+    expect(snapshot.enemies[0]).toEqual(
+      expect.objectContaining({ hpFraction: 1, isBoss: false, isBurning: false })
+    );
+    expect(snapshot.gold).toBe(engine.economy.gold);
+    expect(snapshot.totalWaves).toBe(2);
+  });
+});
+
 describe('GameEngine wave and combat loop', () => {
   it('spawns enemies from the started wave', () => {
     const engine = new GameEngine(TEST_MAP, 500, 20);

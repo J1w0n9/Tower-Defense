@@ -5,7 +5,7 @@ import { getPathLength, getPositionAtDistance } from './path';
 import { Projectile } from './Projectile';
 import { Tower } from './Tower';
 import { TOWERS_BY_ID } from './towers';
-import type { GameEventMap, GameStatus, MapDefinition, Point } from './types';
+import type { GameEventMap, GameStatus, MapDefinition, Point, SupportMode } from './types';
 import { EventEmitter } from './EventEmitter';
 import { distance } from './vector';
 import { WaveManager } from './WaveManager';
@@ -13,6 +13,39 @@ import { WaveManager } from './WaveManager';
 export interface EngineActionResult {
   success: boolean;
   reason?: string;
+}
+
+export interface TowerSnapshot {
+  id: string;
+  towerTypeId: string;
+  position: Point;
+  isSupport: boolean;
+  supportMode?: SupportMode;
+  range: number;
+}
+
+export interface EnemySnapshot {
+  id: string;
+  position: Point;
+  hpFraction: number;
+  isBoss: boolean;
+  isBurning: boolean;
+}
+
+export interface ProjectileSnapshot {
+  id: string;
+  position: Point;
+}
+
+export interface EngineSnapshot {
+  towers: TowerSnapshot[];
+  enemies: EnemySnapshot[];
+  projectiles: ProjectileSnapshot[];
+  gold: number;
+  lives: number;
+  waveNumber: number;
+  totalWaves: number;
+  status: GameStatus;
 }
 
 export class GameEngine {
@@ -94,6 +127,32 @@ export class GameEngine {
     this.updateProjectiles(dt);
     this.removeDeadEnemies();
     this.checkGameEnd();
+  }
+
+  getSnapshot(): EngineSnapshot {
+    return {
+      towers: this.towers.map((tower) => ({
+        id: tower.id,
+        towerTypeId: tower.stats.id,
+        position: tower.position,
+        isSupport: tower.isSupport,
+        supportMode: tower.supportMode,
+        range: tower.range,
+      })),
+      enemies: this.enemies.map((enemy) => ({
+        id: enemy.id,
+        position: this.enemyPosition(enemy),
+        hpFraction: enemy.hpFraction,
+        isBoss: enemy.isBoss,
+        isBurning: enemy.burnTicksRemaining > 0,
+      })),
+      projectiles: this.projectiles.map((projectile) => ({ id: projectile.id, position: projectile.position })),
+      gold: this.economy.gold,
+      lives: this.economy.lives,
+      waveNumber: this.waveManager.currentWaveNumber,
+      totalWaves: this.waveManager.totalWaves,
+      status: this.status,
+    };
   }
 
   private enemyPosition(enemy: Enemy): Point {
